@@ -6,6 +6,12 @@ namespace Fraud.Scoring
         {
             var builder = Host.CreateApplicationBuilder(args);
             builder.AddServiceDefaults();
+
+            builder.AddAzureServiceBusClient("ServiceBus", options =>
+            {
+                options.DisableTracing = false;
+            });
+
             builder.Services.AddHostedService<Worker>();
 
             var host = builder.Build();
