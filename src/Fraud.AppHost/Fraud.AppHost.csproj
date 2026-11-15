@@ -9,4 +9,10 @@
     <UserSecretsId>4ba381fd-0d55-4790-8b30-cde5f3f815b7</UserSecretsId>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Fraud.Api\Fraud.Api.csproj" />
+    <ProjectReference Include="..\Fraud.Scoring\Fraud.Scoring.csproj" />
+    <ProjectReference Include="..\Fraud.Simulator\Fraud.Simulator.csproj" />
+  </ItemGroup>
+
 </Project>
