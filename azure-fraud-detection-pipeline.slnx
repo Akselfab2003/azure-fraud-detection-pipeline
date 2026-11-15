@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="src/Fraud.Api/Fraud.Api.csproj" Id="4c2fecac-cefc-42d2-84c8-9465e187c715" />
+  <Project Path="src/Fraud.AppHost/Fraud.AppHost.csproj" Id="7ddb5209-a878-4842-8366-dadd0f74bc02" />
+  <Project Path="src/Fraud.Contracts/Fraud.Contracts.csproj" Id="749fd66a-26fb-49c2-aa64-4ff09f839652" />
+  <Project Path="src/Fraud.Scoring/Fraud.Scoring.csproj" Id="88c3fb2c-f13e-44cf-95e1-282444cb7201" />
+  <Project Path="src/Fraud.ServiceDefaults/Fraud.ServiceDefaults.csproj" />
+  <Project Path="src/Fraud.Simulator/Fraud.Simulator.csproj" Id="fcef8b0f-3266-4fff-93d3-1af072d4edcf" />
+</Solution>
