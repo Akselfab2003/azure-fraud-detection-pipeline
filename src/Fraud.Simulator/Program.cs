@@ -1,10 +1,15 @@
-﻿namespace Fraud.Simulator
+namespace Fraud.Simulator
 {
-    internal class Program
+    public class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
-            Console.WriteLine("Hello, World!");
+            var builder = Host.CreateApplicationBuilder(args);
+            builder.AddServiceDefaults();
+            builder.Services.AddHostedService<Worker>();
+
+            var host = builder.Build();
+            host.Run();
         }
     }
 }

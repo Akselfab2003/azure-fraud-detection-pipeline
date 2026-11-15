@@ -4,5 +4,5 @@
   <Project Path="src/Fraud.Contracts/Fraud.Contracts.csproj" Id="749fd66a-26fb-49c2-aa64-4ff09f839652" />
   <Project Path="src/Fraud.Scoring/Fraud.Scoring.csproj" Id="88c3fb2c-f13e-44cf-95e1-282444cb7201" />
   <Project Path="src/Fraud.ServiceDefaults/Fraud.ServiceDefaults.csproj" />
-  <Project Path="src/Fraud.Simulator/Fraud.Simulator.csproj" Id="fcef8b0f-3266-4fff-93d3-1af072d4edcf" />
+  <Project Path="src/Fraud.Simulator/Fraud.Simulator.csproj" Id="d51e1f92-0557-41ff-8e1b-22a198de2179" />
 </Solution>
