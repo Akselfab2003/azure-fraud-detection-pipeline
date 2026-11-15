@@ -5,11 +5,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 IResourceBuilder<AzureServiceBusResource> serviceBus = builder.AddAzureServiceBus("ServiceBus")
                                                               .RunAsEmulator();
 
-IResourceBuilder<AzureServiceBusQueueResource> transactionsQueue = serviceBus.AddServiceBusQueue("transactions-queue").WithProperties(q =>
-{
-    q.MaxDeliveryCount = 5;
-    q.LockDuration = TimeSpan.FromSeconds(30);
-});
+IResourceBuilder<AzureServiceBusQueueResource> transactionsQueue = serviceBus.AddServiceBusQueue("transactions-queue");
 
 builder.AddProject<Projects.Fraud_Api>("fraud-api").WithOtlpExporter();
 
