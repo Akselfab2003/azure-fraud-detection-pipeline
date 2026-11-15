@@ -19,7 +19,7 @@ namespace Fraud.Scoring
             await using ServiceBusProcessor processor = _serviceBusClient.CreateProcessor("transactions-queue", new ServiceBusProcessorOptions
             {
                 MaxConcurrentCalls = 1,
-                AutoCompleteMessages = false
+                AutoCompleteMessages = false,
             });
 
             processor.ProcessMessageAsync += ProcessMessageAsync;
