@@ -1,83 +1,102 @@
-using Fraud.Contracts.Enums;
-using Fraud.Data.Context;
 using Fraud.Data.Entities;
+using Fraud.Data.Enums;
 using Microsoft.EntityFrameworkCore;
-using Testcontainers.PostgreSql;
 
 namespace Fraud.Data.Tests;
 
-// Integration test: needs Docker. Runs against a throwaway pgvector Postgres started by Testcontainers.
-public class CaseStorageTests : IAsyncLifetime
+[Collection(PostgresCollection.Name)]
+public class CaseStorageTests(PostgresFixture postgres)
 {
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("pgvector/pgvector:0.8.7-pg18-trixie").Build();
-
-    public ValueTask InitializeAsync() => new(_postgres.StartAsync());
-
-    public ValueTask DisposeAsync() => _postgres.DisposeAsync();
-
     [Fact]
     public async Task Case_written_can_be_read_back_with_its_transaction_and_events()
     {
         var ct = TestContext.Current.CancellationToken;
-        var connectionString = _postgres.GetConnectionString();
-        var options = new DbContextOptionsBuilder<FraudDbContext>()
-            .UseNpgsql(connectionString, npgsql => npgsql.UseVector())
-            .Options;
+        var transaction = TestData.Transaction();
+        var @case = TestData.Case(transaction.Id);
+        @case.Events = [TestData.Event(@case.Id)];
 
-        var transactionId = Guid.CreateVersion7();
-        var caseId = Guid.CreateVersion7();
-        var now = DateTimeOffset.UtcNow;
-
-        await using (var write = new FraudDbContext(options))
+        await using (var write = postgres.CreateContext())
         {
-            await write.Database.MigrateAsync(ct);
-
-            write.Transactions.Add(new TransactionEntity
-            {
-                Id = transactionId,
-                CustomerId = Guid.CreateVersion7(),
-                MerchantId = Guid.CreateVersion7(),
-                MerchantCategory = "electronics",
-                Amount = 1234.50m,
-                Currency = "DKK",
-                Country = "DK",
-                Channel = Channel.Online,
-                OccurredAt = now,
-                RiskScore = 80m,
-                Decision = Decision.Review,
-                ScoredAt = now
-            });
-            write.Cases.Add(new CaseEntity
-            {
-                Id = caseId,
-                TransactionId = transactionId,
-                RiskScore = 80m,
-                Decision = Decision.Review,
-                Reasons = [new CaseReason("VELOCITY_HIGH", 40, "6 transactions in 10 minutes")],
-                RuleSetVersion = "rules-v1",
-                CreatedAt = now,
-                UpdatedAt = now,
-                Events = [new CaseEventEntity { Id = Guid.CreateVersion7(), Type = Data.Enums.CaseEventType.Opened, Actor = "scoring", At = now }]
-            });
-            write.GroundTruth.Add(new GroundTruthEntity { TransactionId = transactionId, IsFraud = true, Pattern = "CardTesting" });
+            write.Transactions.Add(transaction);
+            write.Cases.Add(@case);
+            write.GroundTruth.Add(new GroundTruthEntity { TransactionId = transaction.Id, IsFraud = true, Pattern = "CardTesting" });
             await write.SaveChangesAsync(ct);
         }
 
-        await using var read = new FraudDbContext(options);
+        await using var read = postgres.CreateContext();
         var loaded = await read.Cases
             .Include(c => c.Transaction)
             .Include(c => c.Events)
-            .SingleAsync(c => c.Id == caseId, ct);
+            .SingleAsync(c => c.Id == @case.Id, ct);
 
-        Assert.Equal(transactionId, loaded.Transaction.Id);
+        Assert.Equal(transaction.Id, loaded.Transaction.Id);
         Assert.Equal(1234.50m, loaded.Transaction.Amount);
-        Assert.Equal(Data.Enums.CaseStatus.Open, loaded.Status);
+        Assert.Equal(CaseStatus.Open, loaded.Status);
         Assert.Equal("VELOCITY_HIGH", Assert.Single(loaded.Reasons).Code);
         Assert.Single(loaded.Events);
         Assert.NotEqual(0u, loaded.Version);
 
         // The label lives in its own table, not on the case or transaction
-        var truth = await read.GroundTruth.SingleAsync(g => g.TransactionId == transactionId, ct);
+        var truth = await read.GroundTruth.SingleAsync(g => g.TransactionId == transaction.Id, ct);
         Assert.True(truth.IsFraud);
+    }
+
+    [Fact]
+    public async Task Case_reasons_keep_all_fields_and_order()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var transaction = TestData.Transaction();
+        var @case = TestData.Case(transaction.Id);
+        @case.Reasons =
+        [
+            new CaseReason("VELOCITY_HIGH", 40, "6 in 10 min"),
+            new CaseReason("AMOUNT_SPIKE", 35, "8x average")
+        ];
+
+        await using (var write = postgres.CreateContext())
+        {
+            write.Transactions.Add(transaction);
+            write.Cases.Add(@case);
+            await write.SaveChangesAsync(ct);
+        }
+
+        await using var read = postgres.CreateContext();
+        var loaded = await read.Cases.SingleAsync(c => c.Id == @case.Id, ct);
+
+        Assert.Equal(@case.Reasons, loaded.Reasons);
+    }
+
+    [Fact]
+    public async Task Optional_case_fields_round_trip_when_set()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var transaction = TestData.Transaction();
+        var @case = TestData.Case(transaction.Id);
+        var labelledAt = DateTimeOffset.UtcNow;
+        @case.Status = CaseStatus.ConfirmedFraud;
+        @case.Label = CaseLabel.Fraud;
+        @case.LabelledBy = "analyst-1";
+        @case.LabelledAt = labelledAt;
+        @case.LabelNote = "chargeback confirmed";
+        @case.AnomalyScore = 0.93;
+        @case.ModelVersion = "iforest-2026-11-20";
+
+        await using (var write = postgres.CreateContext())
+        {
+            write.Transactions.Add(transaction);
+            write.Cases.Add(@case);
+            await write.SaveChangesAsync(ct);
+        }
+
+        await using var read = postgres.CreateContext();
+        var loaded = await read.Cases.SingleAsync(c => c.Id == @case.Id, ct);
+
+        Assert.Equal(CaseStatus.ConfirmedFraud, loaded.Status);
+        Assert.Equal(CaseLabel.Fraud, loaded.Label);
+        Assert.Equal("analyst-1", loaded.LabelledBy);
+        Assert.Equal(labelledAt, loaded.LabelledAt!.Value, TimeSpan.FromMilliseconds(1));
+        Assert.Equal("chargeback confirmed", loaded.LabelNote);
+        Assert.Equal(0.93, loaded.AnomalyScore);
+        Assert.Equal("iforest-2026-11-20", loaded.ModelVersion);
     }
 }
