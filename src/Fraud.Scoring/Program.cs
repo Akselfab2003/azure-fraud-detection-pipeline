@@ -1,6 +1,4 @@
-using Fraud.Data.Context;
 using Fraud.Data.ServiceRegistration;
-using Microsoft.EntityFrameworkCore;
 
 namespace Fraud.Scoring
 {
@@ -14,6 +12,9 @@ namespace Fraud.Scoring
             builder.AddAzureServiceBusClient("ServiceBus");
             builder.ConfigureDatabaseServices();
 
+            builder.AddRedisClient("Redis");
+
+            builder.Services.AddDistributedMemoryCache();
             builder.Services.AddHostedService<Worker>();
 
             var host = builder.Build();

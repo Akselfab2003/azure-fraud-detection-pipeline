@@ -9,6 +9,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Aspire.Azure.Messaging.ServiceBus" />
+		<PackageReference Include="Aspire.StackExchange.Redis" />
 		<PackageReference Include="Microsoft.Extensions.Hosting" />
 	</ItemGroup>
 
@@ -16,5 +17,10 @@
 		<ProjectReference Include="..\Fraud.Contracts\Fraud.Contracts.csproj" />
 		<ProjectReference Include="..\Fraud.Data\Fraud.Data.csproj" />
 		<ProjectReference Include="..\Fraud.ServiceDefaults\Fraud.ServiceDefaults.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Handling\" />
+	  <Folder Include="Infrastructure\" />
 	</ItemGroup>
 </Project>
