@@ -12,28 +12,13 @@ namespace Fraud.Scoring
             builder.AddServiceDefaults();
 
             builder.AddAzureServiceBusClient("ServiceBus");
-            builder.Services.ConfigureDatabaseServices(builder.Configuration);
+            builder.ConfigureDatabaseServices();
 
             builder.Services.AddHostedService<Worker>();
 
             var host = builder.Build();
+            host.MigrateDatabaseAsync().GetAwaiter().GetResult();
 
-            if (builder.Environment.IsDevelopment())
-            {
-                using var scope = host.Services.CreateAsyncScope();
-                var dbContext = scope.ServiceProvider.GetRequiredService<FraudDbContext>();
-                var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-                dbContext.Database.EnsureCreated();
-
-                if (dbContext.Database.MigrateAsync().IsCompletedSuccessfully)
-                {
-                    logger.LogInformation("Database migration completed successfully.");
-                }
-                else
-                {
-                    logger.LogError("Database migration failed.");
-                }
-            }
             host.Run();
         }
     }
