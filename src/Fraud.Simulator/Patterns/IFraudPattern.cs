@@ -7,6 +7,6 @@ namespace Fraud.Simulator.Patterns
     {
         FraudPattern Kind { get; }
 
-        IReadOnlyList<GeneratedTransaction> Generate(CustomerProfile customer, IReadOnlyList<Merchant> merchants, DateTimeOffset start, Random random);
+        IReadOnlyList<GeneratedTransaction> Generate(CustomerProfile customer, Population.Population population, DateTimeOffset start, Random random);
     }
 }
