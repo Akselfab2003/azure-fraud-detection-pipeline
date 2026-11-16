@@ -14,16 +14,11 @@ namespace Fraud.Data.Context
         public DbSet<CaseEventEntity> CaseEvents => Set<CaseEventEntity>();
         public DbSet<GroundTruthEntity> GroundTruth => Set<GroundTruthEntity>();
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseNpgsql(con => con.UseVector());
-            base.OnConfiguring(optionsBuilder);
-        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.HasPostgresExtension("vector");
-            modelBuilder.ApplyConfiguration(new Configurations.TransactionEntityConfigurations());
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(FraudDbContext).Assembly);
             base.OnModelCreating(modelBuilder);
         }
     }
