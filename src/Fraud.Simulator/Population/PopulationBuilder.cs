@@ -20,7 +20,7 @@ namespace Fraud.Simulator.Population
 
         private List<Merchant> BuildMerchants()
         {
-            var faker = new Faker("da") { Random = new Randomizer(options.Seed) };
+            var faker = new Faker("en") { Random = new Randomizer(options.Seed) };
             var rng = new Random(options.Seed);
             return [.. Enumerable.Range(0, options.MerchantCount).Select(_ =>
             {
