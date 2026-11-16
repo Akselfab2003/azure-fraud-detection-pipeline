@@ -39,10 +39,8 @@ namespace Fraud.Data.Context.Configurations
             builder.Property(c => c.Label)
                    .HasConversion<string>();
 
-            // List<CaseReason> stored as a single jsonb column
-            builder.Property(c => c.Reasons)
-                   .HasColumnType("jsonb")
-                   .IsRequired();
+            // List<CaseReason> stored as a single jsonb column (EF JSON mapping, no dynamic JSON opt-in needed)
+            builder.OwnsMany(c => c.Reasons, reasons => reasons.ToJson("reasons"));
 
             builder.Property(c => c.RuleSetVersion).IsRequired();
 

@@ -13,7 +13,7 @@ The full plan lives in a Claude artifact titled "Fraud Detection Pipeline on Azu
 ```bash
 dotnet build azure-fraud-detection-pipeline.slnx
 dotnet run --project src/Fraud.AppHost        # runs everything locally + Aspire dashboard (needs Docker for the Service Bus emulator)
-dotnet test                                    # no test projects exist yet
+dotnet test                                    # integration tests (Fraud.Data.Tests) need Docker (Testcontainers)
 dotnet test --filter "FullyQualifiedName~SomeTest"   # single test, once xUnit projects exist
 ```
 
@@ -40,7 +40,7 @@ The repo is early and mid-build: the code is a partial implementation of the Bui
 
 - Local orchestration is Aspire only (no docker-compose). Azure deploy is own Bicep in `infra/` via `azd`, from GitHub Actions with OIDC.
 - Postgres+pgvector for data, Redis for per-customer `CustomerState`, App Configuration for thresholds/rates, Service Bus for messaging.
-- Tests: xUnit unit tests; Aspire xUnit test project for integration. No Testcontainers.
+- Tests: xUnit unit tests; integration tests use Testcontainers (e.g. `Testcontainers.PostgreSql` with the `pgvector/pgvector` image) and need Docker running. Do not use the Aspire testing host for integration tests.
 - Data ownership: only Scoring writes transactions/cases; only Api changes status/labels; only the Simulator writes ground truth.
 - Conventions: `decimal` + ISO currency for money; `DateTimeOffset` UTC with injected `TimeProvider`; `Guid.CreateVersion7()` IDs; enums stored as strings; idempotent consumer (unique constraint on transaction id).
 - No secrets in code or `appsettings.json` — user-secrets locally, Key Vault in Azure.

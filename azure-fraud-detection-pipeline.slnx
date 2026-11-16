@@ -6,5 +6,6 @@
   <Project Path="src/Fraud.Scoring/Fraud.Scoring.csproj" Id="88c3fb2c-f13e-44cf-95e1-282444cb7201" />
   <Project Path="src/Fraud.ServiceDefaults/Fraud.ServiceDefaults.csproj" />
   <Project Path="src/Fraud.Simulator/Fraud.Simulator.csproj" Id="d51e1f92-0557-41ff-8e1b-22a198de2179" />
+  <Project Path="tests/Fraud.Data.Tests/Fraud.Data.Tests.csproj" />
   <Project Path="tests/Fraud.Simulator.Tests/Fraud.Simulator.Tests.csproj" Id="a1067b07-464d-4f31-8f01-8b1b6c94d01a" />
 </Solution>

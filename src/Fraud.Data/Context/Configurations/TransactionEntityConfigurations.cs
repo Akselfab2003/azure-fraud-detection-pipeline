@@ -51,7 +51,7 @@ namespace Fraud.Data.Context.Configurations
                    .HasConversion<string>()
                    .IsRequired();
 
-            builder.HasIndex(t => new { t.CustomerId, t.MerchantId });
+            builder.HasIndex(t => new { t.CustomerId, t.OccurredAt });
 
         }
     }
