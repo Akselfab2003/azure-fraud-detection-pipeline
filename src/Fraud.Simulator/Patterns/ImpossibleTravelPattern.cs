@@ -1,10 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Fraud.Simulator.DataModels;
+using Fraud.Simulator.Generator;
 
 namespace Fraud.Simulator.Patterns
 {
-    internal class ImpossibleTravelPattern
+    public sealed class ImpossibleTravelPattern : IFraudPattern
     {
+        public FraudPattern Kind => FraudPattern.ImpossibleTravel;
+
+        public IReadOnlyList<GeneratedTransaction> Generate(CustomerProfile customer, IReadOnlyList<Merchant> merchants, DateTimeOffset start, Random random)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -1,10 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Fraud.Simulator.DataModels;
+using Fraud.Simulator.Generator;
 
 namespace Fraud.Simulator.Patterns
 {
-    internal class AccountTakeoverPattern
+    public sealed class AccountTakeoverPattern : IFraudPattern
     {
+        public FraudPattern Kind => FraudPattern.AccountTakeover;
+
+        public IReadOnlyList<GeneratedTransaction> Generate(CustomerProfile customer, IReadOnlyList<Merchant> merchants, DateTimeOffset start, Random random)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
