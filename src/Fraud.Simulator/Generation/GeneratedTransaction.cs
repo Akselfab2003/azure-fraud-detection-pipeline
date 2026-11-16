@@ -1,7 +1,7 @@
 ﻿using Fraud.Contracts;
 using Fraud.Simulator.Patterns;
 
-namespace Fraud.Simulator.Generator
+namespace Fraud.Simulator.Generation
 {
     public sealed record GeneratedTransaction(TransactionCreated Message, FraudPattern Pattern)
     {

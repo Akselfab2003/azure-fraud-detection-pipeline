@@ -1,4 +1,4 @@
-﻿using Fraud.Simulator.Generator;
+﻿using Fraud.Simulator.Generation;
 using Fraud.Simulator.Population;
 
 namespace Fraud.Simulator.Patterns

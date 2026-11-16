@@ -1,4 +1,5 @@
 using Fraud.Simulator.Configuration;
+using Fraud.Simulator.Patterns;
 
 namespace Fraud.Simulator
 {
@@ -12,6 +13,14 @@ namespace Fraud.Simulator
             builder.AddAzureServiceBusClient("ServiceBus");
 
             builder.Services.Configure<SimulatorOptions>(builder.Configuration.GetSection("SimulatorOptions"));
+
+            builder.Services.AddSingleton(TimeProvider.System);
+
+            builder.Services.AddSingleton<IFraudPattern, CardTestingPattern>()
+                            .AddSingleton<IFraudPattern, ImpossibleTravelPattern>()
+                            .AddSingleton<IFraudPattern, NewMerchantBurstPattern>()
+                            .AddSingleton<IFraudPattern, AccountTakeoverPattern>();
+
 
             builder.Services.AddHostedService<Worker>();
 

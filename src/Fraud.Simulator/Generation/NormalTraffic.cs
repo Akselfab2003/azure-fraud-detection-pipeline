@@ -1,5 +1,4 @@
 ﻿using Fraud.Contracts;
-using Fraud.Simulator.Generator;
 using Fraud.Simulator.Population;
 
 namespace Fraud.Simulator.Generation

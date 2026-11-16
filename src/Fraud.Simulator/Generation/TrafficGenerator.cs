@@ -1,5 +1,4 @@
 ﻿using Fraud.Simulator.Configuration;
-using Fraud.Simulator.Generator;
 using Fraud.Simulator.Patterns;
 using Fraud.Simulator.Population;
 

@@ -1,4 +1,4 @@
-﻿using Fraud.Simulator.Generator;
+﻿using Fraud.Simulator.Generation;
 using Fraud.Simulator.Population;
 
 namespace Fraud.Simulator.Patterns
@@ -7,7 +7,7 @@ namespace Fraud.Simulator.Patterns
     {
         public FraudPattern Kind => FraudPattern.NewMerchantBurst;
 
-        public IReadOnlyList<GeneratedTransaction> Generate(CustomerProfile customer, IReadOnlyList<Merchant> merchants, DateTimeOffset start, Random random)
+        public IReadOnlyList<GeneratedTransaction> Generate(CustomerProfile customer, Population.Population population, DateTimeOffset start, Random random)
         {
             throw new NotImplementedException();
         }
