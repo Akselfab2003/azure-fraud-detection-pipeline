@@ -14,6 +14,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Fraud.Contracts\Fraud.Contracts.csproj" />
+		<ProjectReference Include="..\Fraud.Data\Fraud.Data.csproj" />
 		<ProjectReference Include="..\Fraud.ServiceDefaults\Fraud.ServiceDefaults.csproj" />
 	</ItemGroup>
 </Project>
