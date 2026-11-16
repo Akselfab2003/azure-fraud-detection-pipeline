@@ -69,8 +69,6 @@ public static class Extensions
                     )
                     // Uncomment the following line to enable gRPC instrumentation (requires the OpenTelemetry.Instrumentation.GrpcNetClient package)
                     //.AddGrpcClientInstrumentation()
-                    .AddSource("Azure.Messaging.ServiceBus.*")
-                    .AddSource("ServiceBusClient")
                     .AddHttpClientInstrumentation();
             });
         AppContext.SetSwitch("Azure.Experimental.EnableActivitySource", true);

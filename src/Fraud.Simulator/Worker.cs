@@ -1,6 +1,7 @@
 using Azure.Messaging.ServiceBus;
 using Bogus;
 using Fraud.Contracts;
+using Fraud.Simulator.DataModels;
 using Microsoft.Extensions.Options;
 
 namespace Fraud.Simulator
@@ -9,9 +10,9 @@ namespace Fraud.Simulator
     {
         private readonly ILogger<Worker> _logger;
         private readonly ServiceBusClient _serviceBusClient;
-        private readonly Settings _settings;
+        private readonly SimulatorOptions _settings;
 
-        public Worker(ILogger<Worker> logger, ServiceBusClient serviceBusClient, IOptions<Settings> settings)
+        public Worker(ILogger<Worker> logger, ServiceBusClient serviceBusClient, IOptions<SimulatorOptions> settings)
         {
             _logger = logger;
             _serviceBusClient = serviceBusClient;
@@ -20,8 +21,8 @@ namespace Fraud.Simulator
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            await using ServiceBusSender sender = _serviceBusClient.CreateSender("transactions-queue");
-            var delay = TimeSpan.FromSeconds(1.0 / _settings.Rps);
+            await using ServiceBusSender sender = _serviceBusClient.CreateSender(QueueNames.Transactions);
+            var delay = TimeSpan.FromSeconds(1.0 / _settings.RatePerSecond);
             while (!stoppingToken.IsCancellationRequested)
             {
                 if (_logger.IsEnabled(LogLevel.Information))

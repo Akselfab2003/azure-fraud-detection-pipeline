@@ -16,7 +16,7 @@ namespace Fraud.Scoring
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            await using ServiceBusProcessor processor = _serviceBusClient.CreateProcessor("transactions-queue", new ServiceBusProcessorOptions
+            await using ServiceBusProcessor processor = _serviceBusClient.CreateProcessor(QueueNames.Transactions, new ServiceBusProcessorOptions
             {
                 MaxConcurrentCalls = 1,
                 AutoCompleteMessages = false,

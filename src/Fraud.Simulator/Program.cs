@@ -1,3 +1,5 @@
+using Fraud.Simulator.DataModels;
+
 namespace Fraud.Simulator
 {
     public class Program
@@ -9,7 +11,7 @@ namespace Fraud.Simulator
             builder.AddServiceDefaults();
             builder.AddAzureServiceBusClient("ServiceBus");
 
-            builder.Services.Configure<Settings>(builder.Configuration.GetSection("SimulatorSettings"));
+            builder.Services.Configure<SimulatorOptions>(builder.Configuration.GetSection("SimulatorOptions"));
 
             builder.Services.AddHostedService<Worker>();
 
