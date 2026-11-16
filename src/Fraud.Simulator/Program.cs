@@ -1,4 +1,4 @@
-using Fraud.Simulator.DataModels;
+using Fraud.Simulator.Configuration;
 
 namespace Fraud.Simulator
 {

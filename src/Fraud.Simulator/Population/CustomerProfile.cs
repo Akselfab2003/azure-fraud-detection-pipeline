@@ -1,4 +1,4 @@
-﻿namespace Fraud.Simulator.DataModels
+﻿namespace Fraud.Simulator.Population
 {
     public sealed record CustomerProfile(Guid Id,
                                          string HomeCountry,

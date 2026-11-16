@@ -1,5 +1,5 @@
-﻿using Fraud.Simulator.DataModels;
-using Fraud.Simulator.Generator;
+﻿using Fraud.Simulator.Generator;
+using Fraud.Simulator.Population;
 
 namespace Fraud.Simulator.Patterns
 {

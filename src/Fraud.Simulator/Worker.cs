@@ -1,7 +1,7 @@
 using Azure.Messaging.ServiceBus;
 using Bogus;
 using Fraud.Contracts;
-using Fraud.Simulator.DataModels;
+using Fraud.Simulator.Configuration;
 using Microsoft.Extensions.Options;
 
 namespace Fraud.Simulator

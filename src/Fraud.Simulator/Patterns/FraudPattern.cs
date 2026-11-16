@@ -1,4 +1,4 @@
-﻿namespace Fraud.Simulator.DataModels
+﻿namespace Fraud.Simulator.Patterns
 {
     public enum FraudPattern
     {

@@ -1,4 +1,6 @@
-﻿namespace Fraud.Simulator.DataModels
+﻿using Fraud.Simulator.Patterns;
+
+namespace Fraud.Simulator.Configuration
 {
     public sealed class SimulatorOptions
     {
