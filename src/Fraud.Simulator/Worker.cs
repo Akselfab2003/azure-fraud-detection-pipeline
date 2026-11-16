@@ -1,16 +1,18 @@
-using System.Text.Json;
 using Azure.Messaging.ServiceBus;
 using Fraud.Contracts;
+using Fraud.Data.Repositories;
 using Fraud.Simulator.Configuration;
 using Fraud.Simulator.Generation;
 using Fraud.Simulator.Reporting;
 using Microsoft.Extensions.Options;
+using System.Text.Json;
 
 namespace Fraud.Simulator
 {
     public class Worker(ILogger<Worker> logger,
                         ServiceBusClient serviceBusClient,
                         TrafficGenerator generator,
+                        IServiceScopeFactory scopeFactory,
                         IOptionsMonitor<SimulatorOptions> options,
                         TimeProvider time) : BackgroundService
     {
@@ -19,7 +21,8 @@ namespace Fraud.Simulator
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             await using ServiceBusSender sender = serviceBusClient.CreateSender(QueueNames.Transactions);
-
+            await using var scope = scopeFactory.CreateAsyncScope();
+            IGroundTruthRepository groundTruthRepository = scope.ServiceProvider.GetRequiredService<IGroundTruthRepository>();
             var stats = new SendStats();
             var lastLog = time.GetTimestamp();
 
@@ -31,6 +34,7 @@ namespace Fraud.Simulator
                     MessageId = tx.Message.TransactionId.ToString(),
                     ContentType = "application/json",
                 };
+                await groundTruthRepository.AddGroundTruthAsync(tx.Message.TransactionId, tx.IsFraud, tx.Pattern.ToString());
                 await sender.SendMessageAsync(message, stoppingToken);
                 stats.Record(tx);
 

@@ -15,7 +15,8 @@ namespace Fraud.Data.ServiceRegistration
             });
 
             services.AddScoped<ITransactionRepository, TransactionRepository>()
-                    .AddScoped<ICaseRepository, CaseRepository>();
+                    .AddScoped<ICaseRepository, CaseRepository>()
+                    .AddScoped<IGroundTruthRepository, GroundTruthRepository>();
 
 
             return services;
