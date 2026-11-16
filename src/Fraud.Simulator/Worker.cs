@@ -1,52 +1,66 @@
+using System.Text.Json;
 using Azure.Messaging.ServiceBus;
-using Bogus;
 using Fraud.Contracts;
 using Fraud.Simulator.Configuration;
+using Fraud.Simulator.Generation;
+using Fraud.Simulator.Reporting;
 using Microsoft.Extensions.Options;
 
 namespace Fraud.Simulator
 {
-    public class Worker : BackgroundService
+    public class Worker(ILogger<Worker> logger,
+                        ServiceBusClient serviceBusClient,
+                        TrafficGenerator generator,
+                        IOptionsMonitor<SimulatorOptions> options,
+                        TimeProvider time) : BackgroundService
     {
-        private readonly ILogger<Worker> _logger;
-        private readonly ServiceBusClient _serviceBusClient;
-        private readonly SimulatorOptions _settings;
-
-        public Worker(ILogger<Worker> logger, ServiceBusClient serviceBusClient, IOptions<SimulatorOptions> settings)
-        {
-            _logger = logger;
-            _serviceBusClient = serviceBusClient;
-            _settings = settings.Value;
-        }
+        private static readonly TimeSpan LogInterval = TimeSpan.FromSeconds(10);
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            await using ServiceBusSender sender = _serviceBusClient.CreateSender(QueueNames.Transactions);
-            var delay = TimeSpan.FromSeconds(1.0 / _settings.RatePerSecond);
-            while (!stoppingToken.IsCancellationRequested)
+            await using ServiceBusSender sender = serviceBusClient.CreateSender(QueueNames.Transactions);
+
+            var stats = new SendStats();
+            var lastLog = time.GetTimestamp();
+
+            foreach (var tx in generator.Stream())
             {
-                if (_logger.IsEnabled(LogLevel.Information))
+                // Only the transaction goes on the wire; the fraud label stays in the simulator.
+                var message = new ServiceBusMessage(JsonSerializer.SerializeToUtf8Bytes(tx.Message))
                 {
-                    Transaction transaction = GenerateTransaction();
-                    await sender.SendMessageAsync(new ServiceBusMessage(System.Text.Json.JsonSerializer.Serialize(transaction)), stoppingToken);
+                    MessageId = tx.Message.TransactionId.ToString(),
+                    ContentType = "application/json",
+                };
+                await sender.SendMessageAsync(message, stoppingToken);
+                stats.Record(tx);
+
+                var elapsed = time.GetElapsedTime(lastLog);
+                if (elapsed >= LogInterval)
+                {
+                    LogSummary(stats.Drain(), elapsed);
+                    lastLog = time.GetTimestamp();
                 }
 
-                await Task.Delay(delay, stoppingToken);
+                // Rate is re-read every iteration, so a config change takes effect without a restart.
+                var rate = Math.Max(options.CurrentValue.RatePerSecond, 0.01);
+                await Task.Delay(TimeSpan.FromSeconds(1.0 / rate), time, stoppingToken);
             }
         }
 
-
-        private Transaction GenerateTransaction()
+        private void LogSummary(SendSummary summary, TimeSpan elapsed)
         {
-            var TransactionFaker = new Faker<Transaction>()
-                .RuleFor(t => t.Id, f => Guid.NewGuid())
-                .RuleFor(t => t.CustomerId, f => Guid.NewGuid())
-                .RuleFor(t => t.MerchantId, f => Guid.NewGuid())
-                .RuleFor(t => t.Amount, f => f.Finance.Amount(1, 1000))
-                .RuleFor(t => t.Timestamp, f => f.Date.Recent())
-                .RuleFor(t => t.IsFraud, false);
+            var byPattern = summary.ByPattern.Count == 0
+                ? "none"
+                : string.Join(", ", summary.ByPattern.OrderBy(kv => kv.Key).Select(kv => $"{kv.Key}={kv.Value}"));
 
-            return TransactionFaker.Generate();
+            logger.LogInformation(
+                "Sent {Sent} transactions in {Seconds:F0}s ({Rate:F1}/s); fraud {Fraud} ({Share:P1}): {ByPattern}",
+                summary.Sent,
+                elapsed.TotalSeconds,
+                summary.Sent / elapsed.TotalSeconds,
+                summary.Fraud,
+                summary.Sent == 0 ? 0 : (double)summary.Fraud / summary.Sent,
+                byPattern);
         }
     }
 }

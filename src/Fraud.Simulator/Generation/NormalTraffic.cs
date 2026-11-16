@@ -5,17 +5,19 @@ namespace Fraud.Simulator.Generation
 {
     public sealed class NormalTraffic(Population.Population population, ActivityCurve activityCurve)
     {
-        // Thinning: draw exponential gaps at the *peak* rate, accept with weight/peakWeight.
+        // Thinning: draw exponential gaps at the constant *peak* rate, keep a candidate at time t
+        // with probability weight(t) / maxWeight. The kept events have rate TransactionsPerDay * weight(t).
         public DateTimeOffset NextTime(CustomerProfile c, DateTimeOffset after, Random rng)
         {
-            var peakRate = c.TransactionsPerDay * activityCurve.Weight(after);
-            var gap = TimeSpan.FromDays(-Math.Log(rng.NextDouble()) / peakRate);
-            var next = after + gap;
-            var weight = activityCurve.Weight(next);
-            if (rng.NextDouble() < weight)
-                return next;
-            else
-                return NextTime(c, next, rng);
+            var peakRatePerDay = c.TransactionsPerDay * activityCurve.MaxWeight;
+            var t = after;
+            while (true)
+            {
+                // 1 - NextDouble() is in (0, 1], so the log is always finite.
+                t += TimeSpan.FromDays(-Math.Log(1.0 - rng.NextDouble()) / peakRatePerDay);
+                if (rng.NextDouble() < activityCurve.Weight(t) / activityCurve.MaxWeight)
+                    return t;
+            }
         }
 
         public GeneratedTransaction Create(CustomerProfile c, DateTimeOffset at, Random rng)

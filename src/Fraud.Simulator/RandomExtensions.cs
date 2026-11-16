@@ -1,6 +1,6 @@
 ﻿namespace Fraud.Simulator
 {
-    public class RandomExtensions
+    public static class RandomExtensions
     {
         // This method generates a seeded Guid based on the provided Random instance. It creates a 16-byte array, fills it with random bytes, and constructs a Guid from those bytes.
         // this is required to ensure that the same Random instance produces the same sequence of Guids, which is important for reproducibility in simulations.

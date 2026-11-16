@@ -37,11 +37,11 @@ namespace Fraud.Scoring
 
         private async Task ProcessMessageAsync(ProcessMessageEventArgs args)
         {
-            Transaction? transaction = System.Text.Json.JsonSerializer.Deserialize<Transaction>(args.Message.Body);
+            TransactionCreated? transaction = System.Text.Json.JsonSerializer.Deserialize<TransactionCreated>(args.Message.Body);
             if (transaction != null)
             {
                 _logger.LogInformation("Processing transaction {TransactionId} for customer {CustomerId} with amount {Amount}",
-                                   transaction.Id,
+                                   transaction.TransactionId,
                                    transaction.CustomerId,
                                    transaction.Amount);
                 await args.CompleteMessageAsync(args.Message);

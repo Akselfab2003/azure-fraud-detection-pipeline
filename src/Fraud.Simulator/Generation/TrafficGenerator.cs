@@ -69,7 +69,8 @@ namespace Fraud.Simulator.Generation
                     throw new InvalidOperationException($"{pattern.Kind} produced a transaction before its start time.");
                 Enqueue(new(null, tx), tx.Message.OccurredAt);
             }
-            return burst.Count;
+            // Patterns may add legitimate "anchor" transactions (label None); only labelled fraud counts toward the share.
+            return burst.Count(t => t.IsFraud);
         }
 
         private void Enqueue(Scheduled s, DateTimeOffset at) => _queue.Enqueue(s, (at, _seq++));
