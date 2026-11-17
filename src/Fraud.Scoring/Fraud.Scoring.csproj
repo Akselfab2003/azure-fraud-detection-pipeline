@@ -18,9 +18,4 @@
 		<ProjectReference Include="..\Fraud.Data\Fraud.Data.csproj" />
 		<ProjectReference Include="..\Fraud.ServiceDefaults\Fraud.ServiceDefaults.csproj" />
 	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Handling\" />
-	  <Folder Include="Infrastructure\" />
-	</ItemGroup>
 </Project>

@@ -1,4 +1,7 @@
 using Fraud.Data.ServiceRegistration;
+using Fraud.Scoring.Handling;
+using Fraud.Scoring.Scoring;
+using Fraud.Scoring.Scoring.Rules;
 
 namespace Fraud.Scoring
 {
@@ -15,6 +18,13 @@ namespace Fraud.Scoring
             builder.AddRedisClient("Redis");
 
             builder.Services.AddDistributedMemoryCache();
+
+            builder.Services.AddScoped<RiskScore>()
+                            .AddScoped<TransactionHandler>();
+
+            builder.Services.AddScoped<IRule, VelocityRule>()
+                            .AddScoped<IRule, AmountBaselineRule>();
+
             builder.Services.AddHostedService<Worker>();
 
             var host = builder.Build();

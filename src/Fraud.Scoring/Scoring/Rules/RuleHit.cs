@@ -1,4 +1,4 @@
 ﻿namespace Fraud.Scoring.Scoring.Rules
 {
-    public sealed record RuleHit(string ReasonCode, int Points);
+    public sealed record RuleHit(string ReasonCode, int Points, string Description);
 }

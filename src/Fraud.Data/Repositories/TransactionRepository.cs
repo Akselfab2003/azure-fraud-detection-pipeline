@@ -16,10 +16,11 @@ namespace Fraud.Data.Repositories
             _context = context;
         }
 
-        public async Task AddTransactionAsync(TransactionEntity transaction)
+        public async Task<TransactionEntity> AddTransactionAsync(TransactionEntity transaction)
         {
             await _context.Transactions.AddAsync(transaction);
             await _context.SaveChangesAsync();
+            return transaction;
         }
 
         public async Task<TransactionEntity?> GetTransactionByIdAsync(Guid transactionId)

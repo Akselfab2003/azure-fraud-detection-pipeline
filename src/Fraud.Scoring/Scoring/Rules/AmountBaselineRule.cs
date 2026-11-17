@@ -1,10 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Fraud.Contracts;
+using Fraud.Scoring.Scoring.State;
 
 namespace Fraud.Scoring.Scoring.Rules
 {
-    internal class AmountBaselineRule
+    public class AmountBaselineRule : IRule
     {
+        public RuleHit? Evaluate(TransactionCreated transaction, CustomerState state, DateTimeOffset now)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

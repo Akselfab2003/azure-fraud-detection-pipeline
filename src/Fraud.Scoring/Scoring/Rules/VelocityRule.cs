@@ -6,6 +6,8 @@ namespace Fraud.Scoring.Scoring.Rules
 {
     public class VelocityRule(IOptions<ScoringOptions> options) : IRule
     {
+        private const string REASONCODE = "VELOCITY";
+        private const string DESCRIPTION = "Too many transactions in a short period of time";
         private readonly ScoringOptions _o = options.Value;
 
         public RuleHit? Evaluate(TransactionCreated transaction, CustomerState state, DateTimeOffset now)
@@ -14,7 +16,7 @@ namespace Fraud.Scoring.Scoring.Rules
             var transactions = inWindow + 1; // +1 for the current transaction
 
             return transactions > _o.VelocityMaxTransactions
-                ? new RuleHit("VELOCITY", _o.VelocityPoints)
+                ? new RuleHit(REASONCODE, _o.VelocityPoints, DESCRIPTION)
                 : null;
         }
     }

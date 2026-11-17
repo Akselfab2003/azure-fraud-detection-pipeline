@@ -8,5 +8,7 @@ namespace Fraud.Scoring.Scoring
         public required int Score { get; init; }
         public required Decision Decision { get; init; }
         public IReadOnlyList<RuleHit> RuleHits { get; init; } = [];
+
+        public bool ShouldReview => Decision == Decision.Review;
     }
 }

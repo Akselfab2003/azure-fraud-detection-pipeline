@@ -17,7 +17,7 @@ namespace Fraud.Scoring.Scoring
             _scoringOptions = scoringOptions.Value;
         }
 
-        public async Task<RiskAssessment> Assess(CustomerState c, TransactionCreated tx, DateTimeOffset now)
+        public RiskAssessment Assess(CustomerState c, TransactionCreated tx, DateTimeOffset now)
         {
             var hits = _rules.Select(r => r.Evaluate(tx, c, now))
                              .OfType<RuleHit>()
