@@ -14,8 +14,8 @@ namespace Fraud.Simulator
                         TrafficGenerator generator,
                         IServiceScopeFactory scopeFactory,
                         IOptionsMonitor<SimulatorOptions> options,
-                        TimeProvider time,
-                        IUnitOfWork unitOfWork) : BackgroundService
+                        TimeProvider time
+                       ) : BackgroundService
     {
         private static readonly TimeSpan LogInterval = TimeSpan.FromSeconds(10);
 
@@ -23,6 +23,7 @@ namespace Fraud.Simulator
         {
             await using ServiceBusSender sender = serviceBusClient.CreateSender(QueueNames.Transactions);
             await using var scope = scopeFactory.CreateAsyncScope();
+            IUnitOfWork unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
             IGroundTruthRepository groundTruthRepository = scope.ServiceProvider.GetRequiredService<IGroundTruthRepository>();
             var stats = new SendStats();
             var lastLog = time.GetTimestamp();
