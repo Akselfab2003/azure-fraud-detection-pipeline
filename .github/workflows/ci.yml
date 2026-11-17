@@ -31,7 +31,7 @@ jobs:
         shell: bash
 
       - name: Run tests
-        run: dotnet test --no-build --configuration Release --verbosity normal
+        run: dotnet test --no-build --configuration Release --verbosity normal --logger trx
         shell: bash
 
       - name: Publish test results
@@ -40,5 +40,5 @@ jobs:
         with:
           if-no-files-found: warn
           name: test-results
-          path: "**/TestResults/*.xml"
+          path: "**/TestResults/*.trx"
           retention-days: 2
