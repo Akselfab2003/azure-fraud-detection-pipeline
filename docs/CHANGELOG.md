@@ -12,7 +12,16 @@ One entry per step: what changed, and what it taught. Newest first. Edit the "Le
 - Learned: the customer state has to outlive the velocity window. A 10-minute expiry silently reset the rolling average; it now expires 24 hours after the last transaction.
 - Learned: an amount baseline needs a minimum history (`MinHistory`), or the second transaction is judged against a baseline of one.
 - Learned: the impossible-travel window must be longer than the fraud pattern's travel time, or the rule never fires.
-- Baseline recall: _not measured yet, add it here once `docs/queries/evaluate.sql` exists._
+- Baseline (2026-11-17, rules-v1: ReviewThreshold 50, BlockThreshold 90, velocity 40, amount 30, travel 40 points): **recall 0.0%**, 0 cases opened.
+
+  | pattern | fraud | caught | recall | cases | precision | false positives |
+  |---|---|---|---|---|---|---|
+  | ALL | 10 | 0 | 0.0% | 0 | n/a | 0 |
+  | ImpossibleTravel | 1 | 0 | 0.0% | 0 | n/a | 0 |
+  | NewMerchantBurst | 9 | 0 | 0.0% | 0 | n/a | 0 |
+  | None (normal traffic) | 0 | 0 | n/a | 0 | n/a | 0 |
+
+  Only 10 fraud rows, so treat this as a smoke test, not a measurement. Likely cause of the zero: no single rule reaches ReviewThreshold 50 on its own (40, 30, 40), and there is no new-merchant rule yet. Re-run with more fraud rows and record the new numbers here.
 
 ## 0.4 Postgres and case storage
 

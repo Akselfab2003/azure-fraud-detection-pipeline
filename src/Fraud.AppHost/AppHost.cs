@@ -11,11 +11,12 @@ IResourceBuilder<PostgresServerResource> postgres = builder.AddPostgres("Postgre
                                                            .WithImage("pgvector/pgvector:0.8.7-pg18-trixie")
                                                            .WithVolume("fraud-postgres-data-pg18", "/var/lib/postgresql") // pg18+ keeps data in a versioned subdir
                                                            .WithLifetime(ContainerLifetime.Persistent)
-                                                           .WithPgWeb()
+                                                           .WithPgWeb(c => c.WithLifetime(ContainerLifetime.Persistent))
                                                            .WithOtlpExporter();
 IResourceBuilder<RedisResource> redis = builder.AddRedis("Redis")
                                                .WithRepl()
-                                               .WithRedisInsight()
+                                               .WithRedisInsight(c => c.WithLifetime(ContainerLifetime.Persistent))
+                                               .WithLifetime(ContainerLifetime.Persistent)
                                                .WithOtlpExporter();
 
 IResourceBuilder<PostgresDatabaseResource> FraudDB = postgres.AddDatabase("FraudDB");

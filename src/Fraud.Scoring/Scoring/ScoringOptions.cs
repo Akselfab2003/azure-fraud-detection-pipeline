@@ -8,7 +8,7 @@
         public string RuleSetVersion { get; init; } = "rules-v1";
 
         /// <summary>A risk score at or above this opens a case (Decision.Review).</summary>
-        public decimal ReviewThreshold { get; init; } = 50m;
+        public decimal ReviewThreshold { get; init; } = 40m;
 
         /// <summary>A risk score at or above this is Decision.Block. Keep it above ReviewThreshold.</summary>
         public decimal BlockThreshold { get; init; } = 90m;
