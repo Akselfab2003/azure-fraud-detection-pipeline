@@ -1,10 +1,8 @@
-using Fraud.Data.Context;
 using Fraud.Data.ServiceRegistration;
 using Fraud.Simulator.Configuration;
 using Fraud.Simulator.Generation;
 using Fraud.Simulator.Patterns;
 using Fraud.Simulator.Population;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace Fraud.Simulator

@@ -5,30 +5,40 @@ using Microsoft.Extensions.Options;
 
 namespace Fraud.Scoring.Scoring.Rules
 {
+    /// <summary>
+    /// Fires when, within the burst window, the customer buys at <see cref="ScoringOptions.NewMerchantBurstThreshold"/>
+    /// or more different merchants they had never used before the window. The current transaction counts.
+    /// </summary>
     public class NewMerchantBurstRule(IOptions<ScoringOptions> options, ITransactionRepository transactionRepository) : IRule
     {
-        private ScoringOptions Options => options.Value;
-        private const string RULECODE = "NewMerchantBurst";
+        private const string REASONCODE = "NEW_MERCHANT_BURST";
         private const string DESCRIPTION = "A run of purchases at several merchants the customer has never used, in a short window.";
+
+        private ScoringOptions Options => options.Value;
 
         public async Task<RuleHit?> Evaluate(TransactionCreated transaction, CustomerState state, DateTimeOffset now)
         {
-            if (state.RecentTransactionTimes.Count < Options.NewMerchantBurstThreshold) // too few transactions to tell if this is a burst of new merchants
+            // With little history every merchant looks new, so this rule needs an established customer
+            // (same idea as MinHistory on the amount rule). This also skips the database query for new customers.
+            if (state.TransactionCount < Options.MinHistory)
                 return null;
 
             var windowStart = now.AddSeconds(-Options.NewMerchantBurstWindowSeconds);
-            var recentTransactionWithInWindow = await transactionRepository.GetTransactionsByCustomer(transaction.CustomerId, windowStart, now);
 
-            var numberOfNewMerchants = recentTransactionWithInWindow.Select(t => t.MerchantId)
-                                                                    .Distinct()
-                                                                    .Count();
+            var inWindow = await transactionRepository.GetTransactionsByCustomer(transaction.CustomerId, windowStart, now);
+            var before = await transactionRepository.GetTransactionsByCustomer(transaction.CustomerId, null, windowStart.AddTicks(-1));
 
-            if (numberOfNewMerchants >= Options.NewMerchantBurstThreshold)
-            {
-                return new RuleHit(RULECODE, Options.NewMerchantBurstScore, DESCRIPTION);
-            }
+            var knownMerchants = before.Select(t => t.MerchantId).ToHashSet();
 
-            return null;
+            var newMerchantsInWindow = inWindow.Select(t => t.MerchantId)
+                                               .Append(transaction.MerchantId)   // the current transaction is not stored yet
+                                               .Where(id => !knownMerchants.Contains(id))
+                                               .Distinct()
+                                               .Count();
+
+            return newMerchantsInWindow >= Options.NewMerchantBurstThreshold
+                ? new RuleHit(REASONCODE, Options.NewMerchantBurstScore, DESCRIPTION)
+                : null;
         }
     }
 }

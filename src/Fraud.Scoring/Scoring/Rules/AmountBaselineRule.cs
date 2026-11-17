@@ -8,19 +8,21 @@ namespace Fraud.Scoring.Scoring.Rules
     {
         private const string REASONCODE = "AMOUNT_SPIKE";
         private const string DESCRIPTION = "Transaction amount is significantly higher than the customer's baseline.";
-        public async Task<RuleHit?> Evaluate(TransactionCreated transaction, CustomerState state, DateTimeOffset now)
+        public Task<RuleHit?> Evaluate(TransactionCreated transaction, CustomerState state, DateTimeOffset now)
         {
             if (state.TransactionCount < _o.Value.MinHistory)
             {
                 // Not enough history for a meaningful baseline (covers the first-ever transaction)
-                return null;
+                return Task.FromResult<RuleHit?>(null);
             }
 
             var threshold = state.AverageAmount * _o.Value.AmountMultiplier;
 
-            return transaction.Amount > threshold
+            RuleHit? hit = transaction.Amount > threshold
                 ? new RuleHit(REASONCODE, _o.Value.AmountPoints, DESCRIPTION)
                 : null;
+
+            return Task.FromResult(hit);
         }
     }
 }

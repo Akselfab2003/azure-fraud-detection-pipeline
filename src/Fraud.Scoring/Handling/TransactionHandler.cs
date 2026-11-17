@@ -45,7 +45,7 @@ namespace Fraud.Scoring.Handling
             customerState ??= CustomerState.EmptyState;
 
 
-            RiskAssessment riskAssessment = _riskScore.Assess(customerState, tx, tx.OccurredAt);
+            RiskAssessment riskAssessment = await _riskScore.AssessAsync(customerState, tx, tx.OccurredAt);
 
             var transactionEntity = await CreateTransaction(tx, riskAssessment);
 

@@ -33,7 +33,8 @@ namespace Fraud.Scoring
 
             builder.Services.AddScoped<IRule, VelocityRule>()
                             .AddScoped<IRule, AmountBaselineRule>()
-                            .AddScoped<IRule, ImpossibleTravelRule>();
+                            .AddScoped<IRule, ImpossibleTravelRule>()
+                            .AddScoped<IRule, NewMerchantBurstRule>();
 
             builder.Services.AddHostedService<Worker>();
 

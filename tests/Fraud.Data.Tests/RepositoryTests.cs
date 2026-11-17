@@ -1,6 +1,7 @@
 using Fraud.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using NSubstitute;
 
 namespace Fraud.Data.Tests;
 
@@ -62,9 +63,11 @@ public class RepositoryTests(PostgresFixture postgres)
         Assert.Contains(await repository.GetAllGroundTruthAsync(), g => g.TransactionId == transactionId);
     }
 
-    private sealed class FixedClock(DateTimeOffset now) : TimeProvider
+    private static TimeProvider ClockAt(DateTimeOffset now)
     {
-        public override DateTimeOffset GetUtcNow() => now;
+        var clock = Substitute.For<TimeProvider>();
+        clock.GetUtcNow().Returns(now);
+        return clock;
     }
 
     [Fact]
@@ -73,7 +76,7 @@ public class RepositoryTests(PostgresFixture postgres)
         var transactionId = Guid.CreateVersion7();
         var written = new DateTimeOffset(2026, 3, 4, 5, 6, 7, TimeSpan.Zero);
         await using var db = postgres.CreateContext();
-        var repository = new GroundTruthRepository(NullLogger<GroundTruthRepository>.Instance, db, new FixedClock(written));
+        var repository = new GroundTruthRepository(NullLogger<GroundTruthRepository>.Instance, db, ClockAt(written));
 
         await repository.AddGroundTruthAsync(transactionId, false, "None");
         await new UnitOfWork(NullLogger<UnitOfWork>.Instance, db).SaveChangesAsync(TestContext.Current.CancellationToken);

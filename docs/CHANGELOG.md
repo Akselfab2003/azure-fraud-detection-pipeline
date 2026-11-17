@@ -6,6 +6,8 @@ One entry per step: what changed, and what it taught. Newest first. Edit the "Le
 
 - Redis holds per-customer state; three rules (velocity, amount vs baseline, impossible travel) behind `IRule`; `RiskScorer` sums points and decides; `TransactionHandler` ties state, scoring and storage together.
 - Option and reason-code names now match the spec (`RuleSetVersion`, `ReviewThreshold`, `VelocityMaxCount`, `VELOCITY_HIGH`, `AMOUNT_SPIKE`). `BlockThreshold` (90) produces `Decision.Block`; Review and Block both open a case.
+- `NewMerchantBurstRule` counts merchants the customer had not used before the window (not just distinct merchants), skips customers with fewer than `MinHistory` transactions, and is registered. It reads history from Postgres, so rules are async and the scorer awaits them one at a time (a shared DbContext is not thread-safe).
+- Tests use NSubstitute for rules, repositories, the state store and the clock.
 - Transaction and case are saved in one `SaveChanges` (unit of work), so a crash can't leave a transaction without its case.
 - Duplicate deliveries are skipped twice over: an up-front lookup, and a catch for the unique-key violation when two deliveries race.
 - Learned: rules must see the state *before* the transaction, and state may only be updated *after* the save, or a retry double-counts.

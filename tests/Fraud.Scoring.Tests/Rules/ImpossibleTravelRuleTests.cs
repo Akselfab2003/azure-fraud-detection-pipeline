@@ -14,15 +14,15 @@ public class ImpossibleTravelRuleTests
         TestData.State([TestData.Now - ago], count: 1);
 
     [Fact]
-    public void First_ever_transaction_does_not_hit()
+    public async Task First_ever_transaction_does_not_hit()
     {
-        Assert.Null(_rule.Evaluate(TestData.Tx(country: "BR"), TestData.State(), TestData.Now));
+        Assert.Null(await _rule.Evaluate(TestData.Tx(country: "BR"), TestData.State(), TestData.Now));
     }
 
     [Fact]
-    public void Different_country_inside_the_window_hits_with_reason_and_points()
+    public async Task Different_country_inside_the_window_hits_with_reason_and_points()
     {
-        var hit = _rule.Evaluate(TestData.Tx(country: "BR"), LastSeenInDk(TimeSpan.FromMinutes(20)), TestData.Now);
+        var hit = await _rule.Evaluate(TestData.Tx(country: "BR"), LastSeenInDk(TimeSpan.FromMinutes(20)), TestData.Now);
 
         Assert.NotNull(hit);
         Assert.Equal("IMPOSSIBLE_TRAVEL", hit.ReasonCode);
@@ -30,26 +30,26 @@ public class ImpossibleTravelRuleTests
     }
 
     [Fact]
-    public void Different_country_outside_the_window_does_not_hit()
+    public async Task Different_country_outside_the_window_does_not_hit()
     {
-        Assert.Null(_rule.Evaluate(TestData.Tx(country: "BR"), LastSeenInDk(TimeSpan.FromHours(5)), TestData.Now));
+        Assert.Null(await _rule.Evaluate(TestData.Tx(country: "BR"), LastSeenInDk(TimeSpan.FromHours(5)), TestData.Now));
     }
 
     [Fact]
-    public void Different_country_exactly_one_window_later_does_not_hit()
+    public async Task Different_country_exactly_one_window_later_does_not_hit()
     {
         // The window is exclusive: sinceLast < window.
-        Assert.Null(_rule.Evaluate(TestData.Tx(country: "BR"), LastSeenInDk(Defaults.ImpossibleTravelWindow), TestData.Now));
+        Assert.Null(await _rule.Evaluate(TestData.Tx(country: "BR"), LastSeenInDk(Defaults.ImpossibleTravelWindow), TestData.Now));
     }
 
     [Fact]
-    public void Same_country_inside_the_window_does_not_hit()
+    public async Task Same_country_inside_the_window_does_not_hit()
     {
-        Assert.Null(_rule.Evaluate(TestData.Tx(country: "DK"), LastSeenInDk(TimeSpan.FromMinutes(1)), TestData.Now));
+        Assert.Null(await _rule.Evaluate(TestData.Tx(country: "DK"), LastSeenInDk(TimeSpan.FromMinutes(1)), TestData.Now));
     }
 
     [Fact]
-    public void Points_and_window_come_from_options()
+    public async Task Points_and_window_come_from_options()
     {
         var rule = new ImpossibleTravelRule(TestData.Options(new ScoringOptions
         {
@@ -57,7 +57,7 @@ public class ImpossibleTravelRuleTests
             ImpossibleTravelPoints = 9,
         }));
 
-        var hit = rule.Evaluate(TestData.Tx(country: "BR"), LastSeenInDk(TimeSpan.FromHours(5)), TestData.Now);
+        var hit = await rule.Evaluate(TestData.Tx(country: "BR"), LastSeenInDk(TimeSpan.FromHours(5)), TestData.Now);
 
         Assert.Equal(9, hit?.Points);
     }

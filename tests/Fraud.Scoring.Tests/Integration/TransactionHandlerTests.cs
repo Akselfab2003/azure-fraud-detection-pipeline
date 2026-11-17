@@ -9,6 +9,7 @@ using Fraud.Scoring.Scoring.Rules;
 using Fraud.Scoring.Scoring.State;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using NSubstitute;
 
 namespace Fraud.Scoring.Tests.Integration;
 
@@ -16,21 +17,21 @@ namespace Fraud.Scoring.Tests.Integration;
 [Collection(InfraCollection.Name)]
 public class TransactionHandlerTests(InfraFixture infra)
 {
-    private sealed class ThrowingStateStore : ICustomerStateStore
+    private static ICustomerStateStore FailingStateStore()
     {
-        public Task<CustomerState?> GetCustomerState(Guid customerId, CancellationToken ct) =>
-            throw new InvalidOperationException("redis is down");
-
-        public Task UpsertCustomerState(Guid customerId, CustomerState customerState, CancellationToken ct) =>
-            throw new InvalidOperationException("redis is down");
+        var store = Substitute.For<ICustomerStateStore>();
+        store.GetCustomerState(default, default).ReturnsForAnyArgs<CustomerState?>(_ => throw new InvalidOperationException("redis is down"));
+        store.UpsertCustomerState(default, default!, default).ReturnsForAnyArgs(_ => throw new InvalidOperationException("redis is down"));
+        return store;
     }
 
     // Simulates two deliveries racing: the idempotency check sees nothing, the insert then hits the unique key.
-    private sealed class BlindToExistingTransactions(ITransactionRepository inner) : ITransactionRepository
+    private static ITransactionRepository BlindToExisting(ITransactionRepository inner)
     {
-        public Task<TransactionEntity> AddTransactionAsync(TransactionEntity transaction) => inner.AddTransactionAsync(transaction);
-        public Task<IEnumerable<TransactionEntity>> GetAllTransactionsAsync() => inner.GetAllTransactionsAsync();
-        public Task<TransactionEntity?> GetTransactionByIdAsync(Guid transactionId) => Task.FromResult<TransactionEntity?>(null);
+        var repository = Substitute.For<ITransactionRepository>();
+        repository.GetTransactionByIdAsync(default).ReturnsForAnyArgs((TransactionEntity?)null);
+        repository.AddTransactionAsync(default!).ReturnsForAnyArgs(call => inner.AddTransactionAsync(call.Arg<TransactionEntity>()));
+        return repository;
     }
 
     private async Task Handle(
@@ -43,10 +44,10 @@ public class TransactionHandlerTests(InfraFixture infra)
         await using var db = infra.CreateDbContext();
         ITransactionRepository transactions = new TransactionRepository(NullLogger<TransactionRepository>.Instance, db);
         transactions = wrapTransactions?.Invoke(transactions) ?? transactions;
-        var time = new FakeTimeProvider(TestData.Now);
+        var time = TestData.Clock();
 
         var handler = new TransactionHandler(
-            new RiskScorer([new VelocityRule(options), new AmountBaselineRule(options), new ImpossibleTravelRule(options)], options),
+            new RiskScorer([new VelocityRule(options), new AmountBaselineRule(options), new ImpossibleTravelRule(options), new NewMerchantBurstRule(options, transactions)], options),
             transactions,
             stateStore ?? new RedisCustomerStateStore(NullLogger<RedisCustomerStateStore>.Instance, infra.CreateCache()),
             new CaseWriter(new CaseRepository(NullLogger<CaseRepository>.Instance, db), time, options),
@@ -113,7 +114,7 @@ public class TransactionHandlerTests(InfraFixture infra)
         await Handle(tx);
 
         // Second delivery slips past the idempotency check; the unique key on the transaction id must catch it.
-        await Handle(tx, wrapTransactions: t => new BlindToExistingTransactions(t));
+        await Handle(tx, wrapTransactions: BlindToExisting);
 
         await using var db = infra.CreateDbContext();
         Assert.Equal(1, await db.Transactions.CountAsync(t => t.Id == tx.TransactionId, TestContext.Current.CancellationToken));
@@ -126,7 +127,7 @@ public class TransactionHandlerTests(InfraFixture infra)
         var tx = TestData.Tx();
 
         // The exception must reach the caller so the message is retried, not completed.
-        await Assert.ThrowsAsync<InvalidOperationException>(() => Handle(tx, stateStore: new ThrowingStateStore()));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => Handle(tx, stateStore: FailingStateStore()));
 
         Assert.Null(await FindTransaction(tx.TransactionId));
     }
@@ -223,6 +224,34 @@ public class TransactionHandlerTests(InfraFixture infra)
         var @case = await FindCase(worst.TransactionId);
         Assert.Equal(Decision.Block, @case?.Decision);
         Assert.Equal(["AMOUNT_SPIKE", "IMPOSSIBLE_TRAVEL", "VELOCITY_HIGH"], @case!.Reasons.Select(r => r.Code).Order());
+    }
+
+    [Fact]
+    public async Task Burst_of_first_time_merchants_opens_a_case_with_the_new_merchant_reason()
+    {
+        var customer = Guid.CreateVersion7();
+        var usual = Guid.CreateVersion7();
+
+        // An established customer: five purchases, a day apart, at one usual merchant.
+        for (var i = 0; i < 5; i++)
+            await Handle(TestData.Tx(100m, TestData.Now.AddDays(-6 + i), customer, merchantId: usual));
+
+        // Then four first-time merchants within four minutes. The rule fires on the fourth, not before.
+        for (var i = 0; i < 4; i++)
+        {
+            var tx = TestData.Tx(100m, TestData.Now.AddMinutes(i), customer, merchantId: Guid.CreateVersion7());
+            await Handle(tx);
+
+            var @case = await FindCase(tx.TransactionId);
+            if (i < 3)
+            {
+                Assert.Null(@case);
+                continue;
+            }
+
+            Assert.NotNull(@case);
+            Assert.Contains(@case.Reasons, r => r.Code == "NEW_MERCHANT_BURST");
+        }
     }
 
     [Fact]

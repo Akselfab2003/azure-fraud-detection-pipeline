@@ -35,6 +35,7 @@ Each rule is a class behind `IRule` and returns points plus a reason code. The r
 | `VelocityRule` | `VELOCITY_HIGH` | More than `VelocityMaxCount` transactions (including this one) within `VelocityWindow` |
 | `AmountBaselineRule` | `AMOUNT_SPIKE` | Amount is above `AmountMultiplier` times the customer's average, once they have at least `MinHistory` transactions |
 | `ImpossibleTravelRule` | `IMPOSSIBLE_TRAVEL` | Different country than the last transaction, within `ImpossibleTravelWindow` |
+| `NewMerchantBurstRule` | `NEW_MERCHANT_BURST` | At least `NewMerchantBurstThreshold` merchants the customer never used before, within `NewMerchantBurstWindowSeconds` (the current transaction counts). Needs `MinHistory` transactions first; reads stored transactions from Postgres |
 
 All thresholds, windows and points live in the `Scoring` section of `src/Fraud.Scoring/appsettings.json` (`ScoringOptions`).
 

@@ -17,11 +17,15 @@ namespace Fraud.Scoring.Scoring
             _scoringOptions = scoringOptions.Value;
         }
 
-        public RiskAssessment Assess(CustomerState c, TransactionCreated tx, DateTimeOffset now)
+        public async Task<RiskAssessment> AssessAsync(CustomerState c, TransactionCreated tx, DateTimeOffset now)
         {
-            var hits = _rules.Select(r => r.Evaluate(tx, c, now))
-                             .OfType<RuleHit>()
-                             .ToList();
+            // One rule at a time: rules may query the database, and the DbContext is not thread-safe.
+            var hits = new List<RuleHit>();
+            foreach (var rule in _rules)
+            {
+                if (await rule.Evaluate(tx, c, now) is { } hit)
+                    hits.Add(hit);
+            }
 
             var score = hits.Sum(h => h.Points);
 
