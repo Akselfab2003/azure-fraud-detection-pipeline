@@ -1,3 +1,4 @@
+[![CI](https://github.com/Akselfab2003/azure-fraud-detection-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/Akselfab2003/azure-fraud-detection-pipeline/actions/workflows/ci.yml)
 # Azure Fraud Detection Pipeline
 
 Event-driven card-fraud detection on Azure (.NET 11, Aspire, Service Bus). A simulator publishes labelled synthetic transactions to a queue, a scoring worker scores them with rules and stores cases for analysts. Synthetic data only.
