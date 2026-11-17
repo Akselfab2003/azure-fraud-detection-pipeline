@@ -1,0 +1,44 @@
+name: CI
+description: This workflow runs the continuous integration tests for the project.
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        name: Checkout repository
+        timeout-minutes: 10
+
+      - name: Setup Dotnet
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 11.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore
+        shell: bash
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+        shell: bash
+
+      - name: Run tests
+        run: dotnet test --no-build --configuration Release --verbosity normal
+        shell: bash
+
+      - name: Publish test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          if-no-files-found: warn
+          name: test-results
+          path: "**/TestResults/*.xml"
+          retention-days: 2
