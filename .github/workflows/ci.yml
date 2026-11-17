@@ -31,7 +31,7 @@ jobs:
         shell: bash
 
       - name: Run tests
-        run: dotnet test --no-build --configuration Release --verbosity normal --logger trx
+        run: dotnet test --no-build --configuration Release --verbosity normal --report-xunit-trx --results-directory TestResults --report-xunit-trx-filename "test-results.trx"
         shell: bash
 
       - name: Publish test results
