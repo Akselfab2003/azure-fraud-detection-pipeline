@@ -12,6 +12,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Fraud.Data.Tests/Fraud.Data.Tests.csproj" />
+    <Project Path="tests/Fraud.Scoring.Tests/Fraud.Scoring.Tests.csproj" />
     <Project Path="tests/Fraud.Simulator.Tests/Fraud.Simulator.Tests.csproj" Id="a1067b07-464d-4f31-8f01-8b1b6c94d01a" />
   </Folder>
 </Solution>
