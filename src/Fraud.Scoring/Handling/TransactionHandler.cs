@@ -9,19 +9,20 @@ namespace Fraud.Scoring.Handling
 {
     public class TransactionHandler
     {
-        private readonly RiskScore _riskScore;
+        private readonly RiskScorer _riskScore;
         private readonly ITransactionRepository _transactionRepository;
         private readonly ICustomerStateStore _customerStateStore;
         private readonly CaseWriter _caseWriter;
         private readonly TimeProvider _timeProvider;
-
-        public TransactionHandler(RiskScore riskScore, ITransactionRepository transactionRepository, ICustomerStateStore customerStateStore, CaseWriter caseWriter, TimeProvider timeProvider)
+        private readonly IUnitOfWork _unitOfWork;
+        public TransactionHandler(RiskScorer riskScore, ITransactionRepository transactionRepository, ICustomerStateStore customerStateStore, CaseWriter caseWriter, TimeProvider timeProvider, IUnitOfWork unitOfWork)
         {
             _riskScore = riskScore;
             _transactionRepository = transactionRepository;
             _customerStateStore = customerStateStore;
             _caseWriter = caseWriter;
             _timeProvider = timeProvider;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task HandleTransaction(TransactionCreated tx, CancellationToken cancellationToken)
@@ -38,8 +39,9 @@ namespace Fraud.Scoring.Handling
 
             if (customerState is null)
             {
-                customerState = new CustomerState([tx.OccurredAt], tx.Country, tx.OccurredAt, tx.Amount, 1);
+                customerState = CustomerState.EmptyState;
             }
+
 
             RiskAssessment riskAssessment = _riskScore.Assess(customerState, tx, tx.OccurredAt);
 
@@ -50,6 +52,8 @@ namespace Fraud.Scoring.Handling
                 await _caseWriter.WriteCaseAsync(transaction: transactionEntity, assessment: riskAssessment);
             }
 
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await UpdateState(tx, customerState, cancellationToken);
         }
 
         private async Task<TransactionEntity> CreateTransaction(TransactionCreated tx, RiskAssessment assessment)
@@ -69,6 +73,35 @@ namespace Fraud.Scoring.Handling
                 OccurredAt = tx.OccurredAt,
                 ScoredAt = _timeProvider.GetUtcNow()
             });
+        }
+
+        private async Task UpdateState(TransactionCreated tx, CustomerState State, CancellationToken cancellationToken)
+        {
+
+            CustomerState UpdatedState = CustomerState.EmptyState;
+
+            if (State == CustomerState.EmptyState)
+            {
+                UpdatedState = new CustomerState(
+                    recentTransactionTimes: new List<DateTimeOffset> { tx.OccurredAt },
+                    lastCountry: tx.Country,
+                    lastTransactionAt: tx.OccurredAt,
+                    averageAmount: tx.Amount,
+                    transactionCount: 1
+                );
+
+            }
+            else
+            {
+                UpdatedState.RecentTransactionTimes = [.. UpdatedState.RecentTransactionTimes.Where(t => tx.OccurredAt - t <= TimeSpan.FromDays(30))];
+                UpdatedState.LastCountry = tx.Country;
+                UpdatedState.LastTransactionAt = tx.OccurredAt;
+                UpdatedState.AverageAmount = ((UpdatedState.AverageAmount * UpdatedState.TransactionCount) + tx.Amount)
+                                              / (UpdatedState.TransactionCount + 1);
+                UpdatedState.TransactionCount += 1;
+            }
+
+            await _customerStateStore.UpsertCustomerState(tx.CustomerId, UpdatedState, cancellationToken);
         }
     }
 }

@@ -23,7 +23,7 @@ namespace Fraud.Scoring
             builder.Services.Configure<ScoringOptions>(builder.Configuration.GetSection(ScoringOptions.SectionName));
 
 
-            builder.Services.AddScoped<RiskScore>()
+            builder.Services.AddScoped<RiskScorer>()
                             .AddScoped<CaseWriter>()
                             .AddScoped<TransactionHandler>();
 

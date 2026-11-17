@@ -25,7 +25,6 @@ namespace Fraud.Data.Repositories
                 Pattern = pattern
             };
             await _dbContext.GroundTruth.AddAsync(groundTruthEntity);
-            await _dbContext.SaveChangesAsync();
         }
 
         public async Task<Entities.GroundTruthEntity?> GetGroundTruthAsync(Guid transactionId)

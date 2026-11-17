@@ -18,6 +18,7 @@ namespace Fraud.Data.ServiceRegistration
 
             builder.Services.AddScoped<ITransactionRepository, TransactionRepository>()
                             .AddScoped<ICaseRepository, CaseRepository>()
+                            .AddScoped<IUnitOfWork, UnitOfWork>()
                             .AddScoped<IGroundTruthRepository, GroundTruthRepository>();
 
             return builder;

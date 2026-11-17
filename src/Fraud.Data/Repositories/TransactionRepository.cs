@@ -19,7 +19,6 @@ namespace Fraud.Data.Repositories
         public async Task<TransactionEntity> AddTransactionAsync(TransactionEntity transaction)
         {
             await _context.Transactions.AddAsync(transaction);
-            await _context.SaveChangesAsync();
             return transaction;
         }
 

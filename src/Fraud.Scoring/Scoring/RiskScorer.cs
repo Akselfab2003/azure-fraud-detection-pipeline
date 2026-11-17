@@ -6,12 +6,12 @@ using Microsoft.Extensions.Options;
 
 namespace Fraud.Scoring.Scoring
 {
-    public class RiskScore
+    public class RiskScorer
     {
         private readonly IEnumerable<IRule> _rules;
         private readonly ScoringOptions _scoringOptions;
 
-        public RiskScore(IEnumerable<IRule> rules, IOptions<ScoringOptions> scoringOptions)
+        public RiskScorer(IEnumerable<IRule> rules, IOptions<ScoringOptions> scoringOptions)
         {
             _rules = rules;
             _scoringOptions = scoringOptions.Value;

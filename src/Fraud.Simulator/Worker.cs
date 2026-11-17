@@ -14,7 +14,8 @@ namespace Fraud.Simulator
                         TrafficGenerator generator,
                         IServiceScopeFactory scopeFactory,
                         IOptionsMonitor<SimulatorOptions> options,
-                        TimeProvider time) : BackgroundService
+                        TimeProvider time,
+                        IUnitOfWork unitOfWork) : BackgroundService
     {
         private static readonly TimeSpan LogInterval = TimeSpan.FromSeconds(10);
 
@@ -35,6 +36,7 @@ namespace Fraud.Simulator
                     ContentType = "application/json",
                 };
                 await groundTruthRepository.AddGroundTruthAsync(tx.Message.TransactionId, tx.IsFraud, tx.Pattern.ToString());
+                await unitOfWork.SaveChangesAsync(stoppingToken);
                 await sender.SendMessageAsync(message, stoppingToken);
                 stats.Record(tx);
 

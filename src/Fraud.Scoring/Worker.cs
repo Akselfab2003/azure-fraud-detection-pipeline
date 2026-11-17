@@ -7,19 +7,18 @@ namespace Fraud.Scoring
     public class Worker : BackgroundService
     {
         private readonly ILogger<Worker> _logger;
+        private readonly ServiceBusClient _serviceBusClient;
         private readonly IServiceScopeFactory _scopeFactory;
-        private TransactionHandler _Handler = null!;
-        public Worker(ILogger<Worker> logger, IServiceScopeFactory scopeFactory)
+
+        public Worker(ILogger<Worker> logger, ServiceBusClient serviceBusClient, IServiceScopeFactory scopeFactory)
         {
             _logger = logger;
+            _serviceBusClient = serviceBusClient;
             _scopeFactory = scopeFactory;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            await using var scope = _scopeFactory.CreateAsyncScope();
-            ServiceBusClient _serviceBusClient = scope.ServiceProvider.GetRequiredService<ServiceBusClient>();
-            _Handler = scope.ServiceProvider.GetRequiredService<TransactionHandler>();
             await using ServiceBusProcessor processor = _serviceBusClient.CreateProcessor(QueueNames.Transactions, new ServiceBusProcessorOptions
             {
                 MaxConcurrentCalls = 1,
@@ -45,6 +44,8 @@ namespace Fraud.Scoring
 
             if (transaction != null)
             {
+                using var scope = _scopeFactory.CreateAsyncScope();
+                TransactionHandler _Handler = scope.ServiceProvider.GetRequiredService<TransactionHandler>();
                 await _Handler.HandleTransaction(transaction, args.CancellationToken);
                 await args.CompleteMessageAsync(args.Message, cancellationToken: args.CancellationToken);
             }

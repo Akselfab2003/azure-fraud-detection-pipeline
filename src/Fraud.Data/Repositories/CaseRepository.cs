@@ -20,7 +20,6 @@ namespace Fraud.Data.Repositories
         public async Task AddCaseAsync(CaseEntity caseEntity)
         {
             await _context.Cases.AddAsync(caseEntity);
-            await _context.SaveChangesAsync();
         }
 
 
