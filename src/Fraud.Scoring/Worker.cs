@@ -48,9 +48,12 @@ namespace Fraud.Scoring
                 TransactionHandler _Handler = scope.ServiceProvider.GetRequiredService<TransactionHandler>();
                 await _Handler.HandleTransaction(transaction, args.CancellationToken);
                 await args.CompleteMessageAsync(args.Message, cancellationToken: args.CancellationToken);
+                return;
             }
             else
+            {
                 await args.DeadLetterMessageAsync(args.Message, "Invalid message format", cancellationToken: args.CancellationToken);
+            }
         }
     }
 }
