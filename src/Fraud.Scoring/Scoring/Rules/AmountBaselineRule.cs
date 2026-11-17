@@ -6,13 +6,13 @@ namespace Fraud.Scoring.Scoring.Rules
 {
     public class AmountBaselineRule(IOptions<ScoringOptions> _o) : IRule
     {
-        private const string REASONCODE = "AMOUNT_BASELINE";
+        private const string REASONCODE = "AMOUNT_SPIKE";
         private const string DESCRIPTION = "Transaction amount is significantly higher than the customer's baseline.";
         public RuleHit? Evaluate(TransactionCreated transaction, CustomerState state, DateTimeOffset now)
         {
-            if (state.TransactionCount == 0)
+            if (state.TransactionCount < _o.Value.MinHistory)
             {
-                // No baseline available, cannot evaluate this rule
+                // Not enough history for a meaningful baseline (covers the first-ever transaction)
                 return null;
             }
 

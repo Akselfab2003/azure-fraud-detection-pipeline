@@ -32,7 +32,7 @@ public class RiskScorerTests
     [Fact]
     public void Score_is_the_sum_of_points_and_keeps_every_hit()
     {
-        var result = Assess(Scorer(new ScoringOptions { CaseThreshold = 100 },
+        var result = Assess(Scorer(new ScoringOptions { ReviewThreshold = 100 },
             new RuleHit("A", 40, "a"), null, new RuleHit("B", 30, "b")));
 
         Assert.Equal(70, result.Score);
@@ -42,7 +42,7 @@ public class RiskScorerTests
     [Fact]
     public void Below_the_threshold_allows()
     {
-        var result = Assess(Scorer(new ScoringOptions { CaseThreshold = 50 }, new RuleHit("A", 49, "a")));
+        var result = Assess(Scorer(new ScoringOptions { ReviewThreshold = 50 }, new RuleHit("A", 49, "a")));
 
         Assert.Equal(Decision.Allow, result.Decision);
         Assert.False(result.ShouldReview);
@@ -51,10 +51,31 @@ public class RiskScorerTests
     [Fact]
     public void Exactly_on_the_threshold_reviews()
     {
-        var result = Assess(Scorer(new ScoringOptions { CaseThreshold = 50 }, new RuleHit("A", 50, "a")));
+        var result = Assess(Scorer(new ScoringOptions { ReviewThreshold = 50 }, new RuleHit("A", 50, "a")));
 
         Assert.Equal(Decision.Review, result.Decision);
         Assert.True(result.ShouldReview);
+    }
+
+    [Fact]
+    public void Exactly_on_the_block_threshold_blocks_and_opens_a_case()
+    {
+        var options = new ScoringOptions { ReviewThreshold = 50, BlockThreshold = 90 };
+
+        var result = Assess(Scorer(options, new RuleHit("A", 90, "a")));
+
+        Assert.Equal(Decision.Block, result.Decision);
+        Assert.True(result.ShouldReview);
+    }
+
+    [Fact]
+    public void Just_below_the_block_threshold_only_reviews()
+    {
+        var options = new ScoringOptions { ReviewThreshold = 50, BlockThreshold = 90 };
+
+        var result = Assess(Scorer(options, new RuleHit("A", 89, "a")));
+
+        Assert.Equal(Decision.Review, result.Decision);
     }
 
     [Fact]

@@ -6,9 +6,10 @@ namespace Fraud.Scoring.Scoring.Rules
 {
     public class ImpossibleTravelRule(IOptions<ScoringOptions> options) : IRule
     {
-        private readonly ScoringOptions _options = options.Value;
         private const string REASONCODE = "IMPOSSIBLE_TRAVEL";
         private const string DESCRIPTION = "Transaction location is inconsistent with previous transactions.";
+        private readonly ScoringOptions _options = options.Value;
+
         public RuleHit? Evaluate(TransactionCreated transaction, CustomerState state, DateTimeOffset now)
         {
             if (state.LastCountry is null || state.LastTransactionAt is null)
@@ -17,13 +18,12 @@ namespace Fraud.Scoring.Scoring.Rules
                 return null;
             }
 
-            // Check if the transaction is from a different country and within the velocity window
-            if (transaction.Country != state.LastCountry && (transaction.OccurredAt - state.LastTransactionAt.Value) < _options.VelocityWindow)
-            {
-                return new RuleHit(REASONCODE, 40, DESCRIPTION);
-            }
+            // A different country within the window is too fast to be a real trip.
+            var sinceLast = now - state.LastTransactionAt.Value;
 
-            return null;
+            return transaction.Country != state.LastCountry && sinceLast < _options.ImpossibleTravelWindow
+                ? new RuleHit(REASONCODE, _options.ImpossibleTravelPoints, DESCRIPTION)
+                : null;
         }
     }
 }

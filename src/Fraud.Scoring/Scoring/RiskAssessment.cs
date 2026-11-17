@@ -9,6 +9,7 @@ namespace Fraud.Scoring.Scoring
         public required Decision Decision { get; init; }
         public IReadOnlyList<RuleHit> RuleHits { get; init; } = [];
 
-        public bool ShouldReview => Decision == Decision.Review;
+        /// <summary>Review and Block both open a case; only Allow does not.</summary>
+        public bool ShouldReview => Decision != Decision.Allow;
     }
 }

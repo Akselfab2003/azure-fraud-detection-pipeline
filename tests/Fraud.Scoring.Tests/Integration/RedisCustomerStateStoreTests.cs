@@ -71,7 +71,8 @@ public class RedisCustomerStateStoreTests(InfraFixture infra)
         var ttl = await redis.GetDatabase().KeyTimeToLiveAsync($"{InfraFixture.RedisInstanceName}customer:{customerId}");
 
         Assert.NotNull(ttl);
-        Assert.InRange(ttl.Value, TimeSpan.Zero, TimeSpan.FromMinutes(30));
+        // Must outlive the velocity window (the average and count live here too) but not stay forever.
+        Assert.InRange(ttl.Value, TimeSpan.FromHours(23), RedisCustomerStateStore.StateLifetime);
     }
 
     [Fact]

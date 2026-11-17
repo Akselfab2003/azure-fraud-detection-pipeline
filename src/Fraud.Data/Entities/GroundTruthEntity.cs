@@ -6,5 +6,6 @@
         public Guid TransactionId { get; set; }       // PK
         public bool IsFraud { get; set; }
         public string Pattern { get; set; } = "None"; // string: Data must not reference the Simulator
+        public DateTimeOffset CreatedAt { get; set; } // when the label was written; lets you evaluate a time range
     }
 }

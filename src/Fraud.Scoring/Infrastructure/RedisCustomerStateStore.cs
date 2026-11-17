@@ -7,10 +7,13 @@ namespace Fraud.Scoring.Infrastructure
     {
         private readonly ILogger<RedisCustomerStateStore> _logger;
         private readonly IDistributedCache _cache;
-        private DistributedCacheEntryOptions cacheOptions => new()
+        // Every upsert rewrites the key, so this is "24 hours since the customer's last transaction".
+        // It must outlive the velocity window: the rolling average and count are what the amount rule needs.
+        public static readonly TimeSpan StateLifetime = TimeSpan.FromHours(24);
+
+        private static DistributedCacheEntryOptions CacheOptions => new()
         {
-            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30),
-            SlidingExpiration = TimeSpan.FromMinutes(10)
+            AbsoluteExpirationRelativeToNow = StateLifetime,
         };
 
         public RedisCustomerStateStore(ILogger<RedisCustomerStateStore> logger, IDistributedCache cache)
@@ -24,7 +27,7 @@ namespace Fraud.Scoring.Infrastructure
         {
             var key = $"customer:{CustomerId}";
             var json = System.Text.Json.JsonSerializer.Serialize(customerState);
-            await _cache.SetStringAsync(key: key, value: json, options: cacheOptions, token: ct);
+            await _cache.SetStringAsync(key: key, value: json, options: CacheOptions, token: ct);
         }
 
         public async Task<CustomerState?> GetCustomerState(Guid CustomerId, CancellationToken ct)

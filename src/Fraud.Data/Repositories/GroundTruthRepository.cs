@@ -10,10 +10,13 @@ namespace Fraud.Data.Repositories
 
         private readonly FraudDbContext _dbContext;
 
-        public GroundTruthRepository(ILogger<GroundTruthRepository> logger, FraudDbContext dbContext)
+        private readonly TimeProvider _timeProvider;
+
+        public GroundTruthRepository(ILogger<GroundTruthRepository> logger, FraudDbContext dbContext, TimeProvider? timeProvider = null)
         {
             _logger = logger;
             _dbContext = dbContext;
+            _timeProvider = timeProvider ?? TimeProvider.System;
         }
 
         public async Task AddGroundTruthAsync(Guid transactionId, bool isFraud, string pattern)
@@ -22,7 +25,8 @@ namespace Fraud.Data.Repositories
             {
                 TransactionId = transactionId,
                 IsFraud = isFraud,
-                Pattern = pattern
+                Pattern = pattern,
+                CreatedAt = _timeProvider.GetUtcNow()
             };
             await _dbContext.GroundTruth.AddAsync(groundTruthEntity);
         }

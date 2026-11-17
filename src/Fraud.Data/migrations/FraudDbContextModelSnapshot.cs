@@ -205,6 +205,11 @@ namespace Fraud.Data.Migrations
                     b.Property<Guid>("TransactionId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
                     b.Property<bool>("IsFraud")
                         .HasColumnType("boolean");
 
@@ -214,12 +219,17 @@ namespace Fraud.Data.Migrations
 
                     b.HasKey("TransactionId");
 
+                    b.HasIndex("CreatedAt");
+
                     b.HasIndex("Pattern");
 
                     b.ToTable("ground_truth", null, t =>
                         {
                             t.Property("TransactionId")
                                 .HasColumnName("transaction_id");
+
+                            t.Property("CreatedAt")
+                                .HasColumnName("created_at");
 
                             t.Property("IsFraud")
                                 .HasColumnName("is_fraud");

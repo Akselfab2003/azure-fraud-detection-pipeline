@@ -32,7 +32,7 @@ namespace Fraud.Scoring.Infrastructure
                         r.ReasonCode,
                         r.Points,
                         r.Description))],
-                RuleSetVersion = _options.RulesCheckVersion,
+                RuleSetVersion = _options.RuleSetVersion,
                 TransactionId = transaction.Id,
                 Status = Data.Enums.CaseStatus.Open,
                 UpdatedAt = _timeProvider.GetUtcNow(),

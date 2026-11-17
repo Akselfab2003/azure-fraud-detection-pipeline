@@ -4,7 +4,9 @@ using Fraud.Data.Repositories;
 using Fraud.Scoring.Infrastructure;
 using Fraud.Scoring.Scoring;
 using Fraud.Scoring.Scoring.State;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Npgsql;
 
 namespace Fraud.Scoring.Handling
 {
@@ -52,7 +54,17 @@ namespace Fraud.Scoring.Handling
                 await _caseWriter.WriteCaseAsync(transaction: transactionEntity, assessment: riskAssessment);
             }
 
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+            {
+                // Another delivery of the same transaction won the race between the idempotency check and the insert.
+                // The transaction is already stored, so this message is a duplicate: nothing more to do.
+                return;
+            }
+
             await UpdateState(tx, customerState, cancellationToken);
         }
 

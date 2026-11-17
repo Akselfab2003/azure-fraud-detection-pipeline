@@ -28,9 +28,15 @@ namespace Fraud.Scoring.Scoring
             return new RiskAssessment()
             {
                 Score = score,
-                Decision = score >= _scoringOptions.CaseThreshold ? Decision.Review : Decision.Allow,
+                Decision = Decide(score),
                 RuleHits = hits,
             };
         }
+
+        // Block wins over Review; both thresholds are inclusive.
+        private Decision Decide(int score) =>
+            score >= _scoringOptions.BlockThreshold ? Decision.Block
+            : score >= _scoringOptions.ReviewThreshold ? Decision.Review
+            : Decision.Allow;
     }
 }

@@ -18,6 +18,22 @@ public class AmountBaselineRuleTests
     }
 
     [Fact]
+    public void Below_minimum_history_does_not_hit()
+    {
+        var state = TestData.State(average: 100m, count: Defaults.MinHistory - 1);
+
+        Assert.Null(_rule.Evaluate(TestData.Tx(amount: 10_000m), state, TestData.Now));
+    }
+
+    [Fact]
+    public void Exactly_at_minimum_history_can_hit()
+    {
+        var state = TestData.State(average: 100m, count: Defaults.MinHistory);
+
+        Assert.NotNull(_rule.Evaluate(TestData.Tx(amount: 10_000m), state, TestData.Now));
+    }
+
+    [Fact]
     public void Exactly_on_the_threshold_does_not_hit()
     {
         var state = TestData.State(average: 100m, count: 10);
@@ -35,7 +51,7 @@ public class AmountBaselineRuleTests
         var hit = _rule.Evaluate(tx, state, TestData.Now);
 
         Assert.NotNull(hit);
-        Assert.Equal("AMOUNT_BASELINE", hit.ReasonCode);
+        Assert.Equal("AMOUNT_SPIKE", hit.ReasonCode);
         Assert.Equal(Defaults.AmountPoints, hit.Points);
     }
 

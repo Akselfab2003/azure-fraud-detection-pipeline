@@ -21,7 +21,7 @@ public class VelocityRuleTests
     public void Exactly_at_the_limit_does_not_hit()
     {
         // 4 recent + the current one = 5, and the limit is "more than 5".
-        var state = TestData.State(TestData.RecentTimes(Defaults.VelocityMaxTransactions - 1));
+        var state = TestData.State(TestData.RecentTimes(Defaults.VelocityMaxCount - 1));
 
         Assert.Null(_rule.Evaluate(TestData.Tx(), state, TestData.Now));
     }
@@ -29,12 +29,12 @@ public class VelocityRuleTests
     [Fact]
     public void One_over_the_limit_hits_with_reason_and_points()
     {
-        var state = TestData.State(TestData.RecentTimes(Defaults.VelocityMaxTransactions));
+        var state = TestData.State(TestData.RecentTimes(Defaults.VelocityMaxCount));
 
         var hit = _rule.Evaluate(TestData.Tx(), state, TestData.Now);
 
         Assert.NotNull(hit);
-        Assert.Equal("VELOCITY", hit.ReasonCode);
+        Assert.Equal("VELOCITY_HIGH", hit.ReasonCode);
         Assert.Equal(Defaults.VelocityPoints, hit.Points);
     }
 
@@ -51,7 +51,7 @@ public class VelocityRuleTests
     public void A_transaction_exactly_one_window_old_is_expired()
     {
         // The window is exclusive: now - t < window. Five entries exactly 10 minutes old do not count.
-        var edge = Enumerable.Repeat(TestData.Now - Defaults.VelocityWindow, Defaults.VelocityMaxTransactions);
+        var edge = Enumerable.Repeat(TestData.Now - Defaults.VelocityWindow, Defaults.VelocityMaxCount);
 
         Assert.Null(_rule.Evaluate(TestData.Tx(), TestData.State(edge), TestData.Now));
     }
@@ -59,7 +59,7 @@ public class VelocityRuleTests
     [Fact]
     public void Threshold_comes_from_options()
     {
-        var rule = new VelocityRule(TestData.Options(new ScoringOptions { VelocityMaxTransactions = 1, VelocityPoints = 7 }));
+        var rule = new VelocityRule(TestData.Options(new ScoringOptions { VelocityMaxCount = 1, VelocityPoints = 7 }));
         var state = TestData.State(TestData.RecentTimes(1));
 
         var hit = rule.Evaluate(TestData.Tx(), state, TestData.Now);

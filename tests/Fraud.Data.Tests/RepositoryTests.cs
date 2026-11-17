@@ -1,4 +1,5 @@
 using Fraud.Data.Repositories;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Fraud.Data.Tests;
@@ -59,5 +60,41 @@ public class RepositoryTests(PostgresFixture postgres)
         Assert.True(found.IsFraud);
         Assert.Equal("ImpossibleTravel", found.Pattern);
         Assert.Contains(await repository.GetAllGroundTruthAsync(), g => g.TransactionId == transactionId);
+    }
+
+    private sealed class FixedClock(DateTimeOffset now) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => now;
+    }
+
+    [Fact]
+    public async Task Ground_truth_repository_stamps_the_label_with_the_injected_clock()
+    {
+        var transactionId = Guid.CreateVersion7();
+        var written = new DateTimeOffset(2026, 3, 4, 5, 6, 7, TimeSpan.Zero);
+        await using var db = postgres.CreateContext();
+        var repository = new GroundTruthRepository(NullLogger<GroundTruthRepository>.Instance, db, new FixedClock(written));
+
+        await repository.AddGroundTruthAsync(transactionId, false, "None");
+        await new UnitOfWork(NullLogger<UnitOfWork>.Instance, db).SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        await using var read = postgres.CreateContext();
+        var found = await read.GroundTruth.AsNoTracking().SingleAsync(g => g.TransactionId == transactionId, TestContext.Current.CancellationToken);
+        Assert.Equal(written, found.CreatedAt);
+    }
+
+    [Fact]
+    public async Task Ground_truth_written_without_a_timestamp_gets_the_database_clock()
+    {
+        var transactionId = Guid.CreateVersion7();
+        var before = DateTimeOffset.UtcNow.AddMinutes(-1);
+        await using var db = postgres.CreateContext();
+
+        db.GroundTruth.Add(new Fraud.Data.Entities.GroundTruthEntity { TransactionId = transactionId, IsFraud = true, Pattern = "CardTesting" });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        await using var read = postgres.CreateContext();
+        var found = await read.GroundTruth.AsNoTracking().SingleAsync(g => g.TransactionId == transactionId, TestContext.Current.CancellationToken);
+        Assert.True(found.CreatedAt > before);
     }
 }
