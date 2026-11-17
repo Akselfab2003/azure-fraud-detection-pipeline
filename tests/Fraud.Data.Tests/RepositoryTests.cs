@@ -12,8 +12,10 @@ public class RepositoryTests(PostgresFixture postgres)
         var transaction = TestData.Transaction();
         await using var db = postgres.CreateContext();
         var repository = new TransactionRepository(NullLogger<TransactionRepository>.Instance, db);
+        IUnitOfWork unitOfWork = new UnitOfWork(NullLogger<UnitOfWork>.Instance, db);
 
         await repository.AddTransactionAsync(transaction);
+        await unitOfWork.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var found = await repository.GetTransactionByIdAsync(transaction.Id);
         Assert.NotNull(found);
@@ -30,8 +32,10 @@ public class RepositoryTests(PostgresFixture postgres)
         await using var db = postgres.CreateContext();
         await new TransactionRepository(NullLogger<TransactionRepository>.Instance, db).AddTransactionAsync(transaction);
         var repository = new CaseRepository(NullLogger<CaseRepository>.Instance, db);
+        IUnitOfWork unitOfWork = new UnitOfWork(NullLogger<UnitOfWork>.Instance, db);
 
         await repository.AddCaseAsync(@case);
+        await unitOfWork.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var found = await repository.GetCaseByIdAsync(@case.Id);
         Assert.NotNull(found);
@@ -45,8 +49,10 @@ public class RepositoryTests(PostgresFixture postgres)
         var transactionId = Guid.CreateVersion7();
         await using var db = postgres.CreateContext();
         var repository = new GroundTruthRepository(NullLogger<GroundTruthRepository>.Instance, db);
+        IUnitOfWork unitOfWork = new UnitOfWork(NullLogger<UnitOfWork>.Instance, db);
 
         await repository.AddGroundTruthAsync(transactionId, true, "ImpossibleTravel");
+        await unitOfWork.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var found = await repository.GetGroundTruthAsync(transactionId);
         Assert.NotNull(found);
