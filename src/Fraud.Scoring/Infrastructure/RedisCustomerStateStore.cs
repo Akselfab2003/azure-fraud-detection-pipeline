@@ -7,6 +7,12 @@ namespace Fraud.Scoring.Infrastructure
     {
         private readonly ILogger<RedisCustomerStateStore> _logger;
         private readonly IDistributedCache _cache;
+        private readonly DistributedCacheEntryOptions _cacheOptions = new()
+        {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1),
+            AbsoluteExpiration = DateTimeOffset.UtcNow.AddDays(1),
+            SlidingExpiration = TimeSpan.FromHours(1)
+        };
 
         public RedisCustomerStateStore(ILogger<RedisCustomerStateStore> logger, IDistributedCache cache)
         {
@@ -21,7 +27,7 @@ namespace Fraud.Scoring.Infrastructure
             {
                 var key = $"customer:{CustomerId}";
                 var json = System.Text.Json.JsonSerializer.Serialize(customerState);
-                await _cache.SetStringAsync(key: key, value: json, token: ct);
+                await _cache.SetStringAsync(key: key, value: json, options: _cacheOptions, token: ct);
             }
             catch (Exception ex)
             {
