@@ -32,7 +32,8 @@ namespace Fraud.Scoring
             builder.Services.AddScoped<ICustomerStateStore, RedisCustomerStateStore>();
 
             builder.Services.AddScoped<IRule, VelocityRule>()
-                            .AddScoped<IRule, AmountBaselineRule>();
+                            .AddScoped<IRule, AmountBaselineRule>()
+                            .AddScoped<IRule, ImpossibleTravelRule>();
 
             builder.Services.AddHostedService<Worker>();
 
