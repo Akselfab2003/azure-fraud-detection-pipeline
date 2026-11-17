@@ -27,8 +27,10 @@ builder.AddProject<Projects.Fraud_Scoring>("fraud-scoring")
        .WaitFor(serviceBus)
        .WaitFor(postgres)
        .WaitFor(FraudDB)
+       .WaitFor(redis)
        .WithReference(serviceBus)
        .WithReference(FraudDB)
+       .WithReference(redis)
        .WithOtlpExporter();
 
 

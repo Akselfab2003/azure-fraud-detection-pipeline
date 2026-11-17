@@ -49,8 +49,8 @@ namespace Fraud.Scoring
                 await _Handler.HandleTransaction(transaction, args.CancellationToken);
                 await args.CompleteMessageAsync(args.Message, cancellationToken: args.CancellationToken);
             }
-
-            await args.DeadLetterMessageAsync(args.Message, "Invalid message format", cancellationToken: args.CancellationToken);
+            else
+                await args.DeadLetterMessageAsync(args.Message, "Invalid message format", cancellationToken: args.CancellationToken);
         }
     }
 }

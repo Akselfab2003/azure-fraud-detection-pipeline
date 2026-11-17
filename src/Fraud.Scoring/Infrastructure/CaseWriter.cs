@@ -1,17 +1,20 @@
 ﻿using Fraud.Data.Entities;
 using Fraud.Data.Repositories;
 using Fraud.Scoring.Scoring;
+using Microsoft.Extensions.Options;
 
 namespace Fraud.Scoring.Infrastructure
 {
     public class CaseWriter
     {
+        private readonly ScoringOptions _options;
         private readonly ICaseRepository _caseRepository;
         private readonly TimeProvider _timeProvider;
-        public CaseWriter(ICaseRepository caseRepository, TimeProvider timeProvider)
+        public CaseWriter(ICaseRepository caseRepository, TimeProvider timeProvider, IOptions<ScoringOptions> options)
         {
             _caseRepository = caseRepository;
             _timeProvider = timeProvider;
+            _options = options.Value;
         }
 
         public async Task WriteCaseAsync(TransactionEntity transaction, RiskAssessment assessment)
@@ -29,7 +32,7 @@ namespace Fraud.Scoring.Infrastructure
                         r.ReasonCode,
                         r.Points,
                         r.Description))],
-                RuleSetVersion = "1.0.0",
+                RuleSetVersion = _options.RulesCheckVersion,
                 TransactionId = transaction.Id,
                 Status = Data.Enums.CaseStatus.Open,
                 UpdatedAt = _timeProvider.GetUtcNow(),

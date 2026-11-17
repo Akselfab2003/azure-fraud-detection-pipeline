@@ -3,6 +3,7 @@
     public sealed class ScoringOptions
     {
         public const string SectionName = "Scoring";
+        public string RulesCheckVersion { get; init; } = "1.0";
         public int CaseThreshold { get; init; } = 50;
         public TimeSpan VelocityWindow { get; init; } = TimeSpan.FromMinutes(10);
         public int VelocityMaxTransactions { get; init; } = 5;

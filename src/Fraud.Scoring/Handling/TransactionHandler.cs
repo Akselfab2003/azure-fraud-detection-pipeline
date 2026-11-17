@@ -40,10 +40,7 @@ namespace Fraud.Scoring.Handling
 
             CustomerState? customerState = await _customerStateStore.GetCustomerState(tx.CustomerId, cancellationToken);
 
-            if (customerState is null)
-            {
-                customerState = CustomerState.EmptyState;
-            }
+            customerState ??= CustomerState.EmptyState;
 
 
             RiskAssessment riskAssessment = _riskScore.Assess(customerState, tx, tx.OccurredAt);
@@ -80,32 +77,18 @@ namespace Fraud.Scoring.Handling
 
         private async Task UpdateState(TransactionCreated tx, CustomerState State, CancellationToken cancellationToken)
         {
+            var times = State.RecentTransactionTimes.Append(tx.OccurredAt)
+                                                    .Where(t => tx.OccurredAt - t <= _options.VelocityWindow)
+                                                    .ToList();
 
-            CustomerState UpdatedState = CustomerState.EmptyState;
+            var updated = new CustomerState(recentTransactionTimes: times,
+                                            lastCountry: tx.Country,
+                                            lastTransactionAt: tx.OccurredAt,
+                                            averageAmount: ((State.AverageAmount * State.TransactionCount) + tx.Amount) / (State.TransactionCount + 1),
+                                            transactionCount: State.TransactionCount + 1);
 
-            if (State == CustomerState.EmptyState)
-            {
-                UpdatedState = new CustomerState(
-                    recentTransactionTimes: new List<DateTimeOffset> { tx.OccurredAt },
-                    lastCountry: tx.Country,
-                    lastTransactionAt: tx.OccurredAt,
-                    averageAmount: tx.Amount,
-                    transactionCount: 1
-                );
 
-            }
-            else
-            {
-                UpdatedState.RecentTransactionTimes = [.. State.RecentTransactionTimes, tx.OccurredAt];
-                UpdatedState.RecentTransactionTimes = [.. State.RecentTransactionTimes.Where(t => tx.OccurredAt - t <= _options.VelocityWindow)];
-                UpdatedState.LastCountry = tx.Country;
-                UpdatedState.LastTransactionAt = tx.OccurredAt;
-                UpdatedState.AverageAmount = ((State.AverageAmount * State.TransactionCount) + tx.Amount)
-                                              / (State.TransactionCount + 1);
-                UpdatedState.TransactionCount += 1;
-            }
-
-            await _customerStateStore.UpsertCustomerState(tx.CustomerId, UpdatedState, cancellationToken);
+            await _customerStateStore.UpsertCustomerState(tx.CustomerId, updated, cancellationToken);
         }
     }
 }
