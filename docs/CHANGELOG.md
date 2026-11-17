@@ -14,32 +14,14 @@ One entry per step: what changed, and what it taught. Newest first. Edit the "Le
 - Learned: the customer state has to outlive the velocity window. A 10-minute expiry silently reset the rolling average; it now expires 24 hours after the last transaction.
 - Learned: an amount baseline needs a minimum history (`MinHistory`), or the second transaction is judged against a baseline of one.
 - Learned: the impossible-travel window must be longer than the fraud pattern's travel time, or the rule never fires.
-- Baseline (2026-11-17, rules-v1: ReviewThreshold 50, BlockThreshold 90, velocity 40, amount 30, travel 40 points): **recall 0.0%**, 0 cases opened.
+- Baseline 2 (2026-11-17, rules-v1: ReviewThreshold 40, BlockThreshold 90, four rules, no warm-up): **recall 16.7%, precision 100%, 0 false positives**.
 
   | pattern | fraud | caught | recall | cases | precision | false positives |
   |---|---|---|---|---|---|---|
-  | ALL | 10 | 0 | 0.0% | 0 | n/a | 0 |
-  | ImpossibleTravel | 1 | 0 | 0.0% | 0 | n/a | 0 |
-  | NewMerchantBurst | 9 | 0 | 0.0% | 0 | n/a | 0 |
+  | ALL | 6 | 1 | 16.7% | 1 | 100.0% | 0 |
+  | ImpossibleTravel | 1 | 1 | 100.0% | 1 | 100.0% | 0 |
+  | NewMerchantBurst | 5 | 0 | 0.0% | 0 | n/a | 0 |
   | None (normal traffic) | 0 | 0 | n/a | 0 | n/a | 0 |
 
-  Only 10 fraud rows, so treat this as a smoke test, not a measurement. Likely cause of the zero: no single rule reaches ReviewThreshold 50 on its own (40, 30, 40), and there is no new-merchant rule yet. Re-run with more fraud rows and record the new numbers here.
-
-## 0.4 Postgres and case storage
-
-- `Fraud.Data` with the DbContext, entities and migrations; pgvector image with a data volume; migrations run on startup in Development only.
-- Ground truth lives in its own table with no foreign key, so the scorer can never see the label. It also records when the label was written.
-
-## 0.3 Realistic simulator
-
-- Seeded customers and merchants, day/night traffic, four fraud patterns, configurable fraud share.
-
-## 0.2 First message flow with tracing
-
-- Simulator to Service Bus emulator to Scoring, with the client coming from the Aspire integration.
-
-## 0.1 Repo and solution
-
-- Solution with the AppHost, ServiceDefaults, Api, Scoring, Simulator, Contracts and Data projects.
-- Nullable and warnings-as-errors are set once in `Directory.Build.props`.
-- MIT license.
+  Still a tiny sample (6 fraud rows, and the 5 NewMerchantBurst rows are probably one burst). The burst was missed most likely because the victim had under `MinHistory` transactions in a freshly started system (cold start).
+- Baseline 1 (2026-11-17, ReviewThreshold 50, three rules): recall 0.0% on 10 fraud rows, 0 cases. Kept for comparison.
