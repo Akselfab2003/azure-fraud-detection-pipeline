@@ -1,21 +1,25 @@
 using Azure.Messaging.ServiceBus;
 using Fraud.Contracts;
+using Fraud.Scoring.Handling;
 
 namespace Fraud.Scoring
 {
     public class Worker : BackgroundService
     {
         private readonly ILogger<Worker> _logger;
-        private readonly ServiceBusClient _serviceBusClient;
-
-        public Worker(ILogger<Worker> logger, ServiceBusClient serviceBusClient)
+        private readonly IServiceScopeFactory _scopeFactory;
+        private TransactionHandler _Handler = null!;
+        public Worker(ILogger<Worker> logger, IServiceScopeFactory scopeFactory)
         {
             _logger = logger;
-            _serviceBusClient = serviceBusClient;
+            _scopeFactory = scopeFactory;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            await using var scope = _scopeFactory.CreateAsyncScope();
+            ServiceBusClient _serviceBusClient = scope.ServiceProvider.GetRequiredService<ServiceBusClient>();
+            _Handler = scope.ServiceProvider.GetRequiredService<TransactionHandler>();
             await using ServiceBusProcessor processor = _serviceBusClient.CreateProcessor(QueueNames.Transactions, new ServiceBusProcessorOptions
             {
                 MaxConcurrentCalls = 1,
@@ -38,13 +42,11 @@ namespace Fraud.Scoring
         private async Task ProcessMessageAsync(ProcessMessageEventArgs args)
         {
             TransactionCreated? transaction = System.Text.Json.JsonSerializer.Deserialize<TransactionCreated>(args.Message.Body);
+
             if (transaction != null)
             {
-                _logger.LogInformation("Processing transaction {TransactionId} for customer {CustomerId} with amount {Amount}",
-                                   transaction.TransactionId,
-                                   transaction.CustomerId,
-                                   transaction.Amount);
-                await args.CompleteMessageAsync(args.Message);
+                await _Handler.HandleTransaction(transaction, args.CancellationToken);
+                await args.CompleteMessageAsync(args.Message, cancellationToken: args.CancellationToken);
             }
         }
     }

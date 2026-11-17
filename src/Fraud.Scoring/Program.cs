@@ -1,7 +1,9 @@
 using Fraud.Data.ServiceRegistration;
 using Fraud.Scoring.Handling;
+using Fraud.Scoring.Infrastructure;
 using Fraud.Scoring.Scoring;
 using Fraud.Scoring.Scoring.Rules;
+using Fraud.Scoring.Scoring.State;
 
 namespace Fraud.Scoring
 {
@@ -11,16 +13,21 @@ namespace Fraud.Scoring
         {
             var builder = Host.CreateApplicationBuilder(args);
             builder.AddServiceDefaults();
+            builder.Services.AddSingleton(TimeProvider.System);
 
             builder.AddAzureServiceBusClient("ServiceBus");
             builder.ConfigureDatabaseServices();
-
             builder.AddRedisClient("Redis");
-
             builder.Services.AddDistributedMemoryCache();
 
+            builder.Services.Configure<ScoringOptions>(builder.Configuration.GetSection(ScoringOptions.SectionName));
+
+
             builder.Services.AddScoped<RiskScore>()
+                            .AddScoped<CaseWriter>()
                             .AddScoped<TransactionHandler>();
+
+            builder.Services.AddScoped<ICustomerStateStore, RedisCustomerStateStore>();
 
             builder.Services.AddScoped<IRule, VelocityRule>()
                             .AddScoped<IRule, AmountBaselineRule>();

@@ -24,7 +24,7 @@ namespace Fraud.Scoring.Handling
             _timeProvider = timeProvider;
         }
 
-        public async Task HandleTransaction(TransactionCreated tx)
+        public async Task HandleTransaction(TransactionCreated tx, CancellationToken cancellationToken)
         {
             var IdempotencyCheck = await _transactionRepository.GetTransactionByIdAsync(tx.TransactionId);
 
@@ -34,7 +34,7 @@ namespace Fraud.Scoring.Handling
                 return;
             }
 
-            CustomerState? customerState = await _customerStateStore.GetCustomerState(tx.CustomerId, CancellationToken.None);
+            CustomerState? customerState = await _customerStateStore.GetCustomerState(tx.CustomerId, cancellationToken);
 
             if (customerState is null)
             {
