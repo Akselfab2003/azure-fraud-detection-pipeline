@@ -7,11 +7,10 @@ namespace Fraud.Scoring.Infrastructure
     {
         private readonly ILogger<RedisCustomerStateStore> _logger;
         private readonly IDistributedCache _cache;
-        private readonly DistributedCacheEntryOptions _cacheOptions = new()
+        private DistributedCacheEntryOptions cacheOptions => new()
         {
-            AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1),
-            AbsoluteExpiration = DateTimeOffset.UtcNow.AddDays(1),
-            SlidingExpiration = TimeSpan.FromHours(1)
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30),
+            SlidingExpiration = TimeSpan.FromMinutes(10)
         };
 
         public RedisCustomerStateStore(ILogger<RedisCustomerStateStore> logger, IDistributedCache cache)
@@ -23,37 +22,22 @@ namespace Fraud.Scoring.Infrastructure
 
         public async Task UpsertCustomerState(Guid CustomerId, CustomerState customerState, CancellationToken ct)
         {
-            try
-            {
-                var key = $"customer:{CustomerId}";
-                var json = System.Text.Json.JsonSerializer.Serialize(customerState);
-                await _cache.SetStringAsync(key: key, value: json, options: _cacheOptions, token: ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error upserting customer state");
-            }
+            var key = $"customer:{CustomerId}";
+            var json = System.Text.Json.JsonSerializer.Serialize(customerState);
+            await _cache.SetStringAsync(key: key, value: json, options: cacheOptions, token: ct);
         }
 
         public async Task<CustomerState?> GetCustomerState(Guid CustomerId, CancellationToken ct)
         {
-            try
-            {
-                var key = $"customer:{CustomerId}";
-                var json = await _cache.GetStringAsync(key: key, token: ct);
+            var key = $"customer:{CustomerId}";
+            var json = await _cache.GetStringAsync(key: key, token: ct);
 
-                if (json is null)
-                {
-                    return null;
-                }
-
-                return System.Text.Json.JsonSerializer.Deserialize<CustomerState>(json);
-            }
-            catch (Exception ex)
+            if (json is null)
             {
-                _logger.LogError(ex, "Error getting customer state");
                 return null;
             }
+
+            return System.Text.Json.JsonSerializer.Deserialize<CustomerState>(json);
         }
     }
 }

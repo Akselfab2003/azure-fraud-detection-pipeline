@@ -10,7 +10,7 @@ namespace Fraud.Scoring.Scoring.Rules
         private const string DESCRIPTION = "Transaction amount is significantly higher than the customer's baseline.";
         public RuleHit? Evaluate(TransactionCreated transaction, CustomerState state, DateTimeOffset now)
         {
-            if (state.AverageAmount is Decimal.Zero)
+            if (state.TransactionCount == 0)
             {
                 // No baseline available, cannot evaluate this rule
                 return null;

@@ -4,18 +4,20 @@ using Fraud.Data.Repositories;
 using Fraud.Scoring.Infrastructure;
 using Fraud.Scoring.Scoring;
 using Fraud.Scoring.Scoring.State;
+using Microsoft.Extensions.Options;
 
 namespace Fraud.Scoring.Handling
 {
     public class TransactionHandler
     {
-        private readonly RiskScorer _riskScore;
         private readonly ITransactionRepository _transactionRepository;
         private readonly ICustomerStateStore _customerStateStore;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly RiskScorer _riskScore;
         private readonly CaseWriter _caseWriter;
         private readonly TimeProvider _timeProvider;
-        private readonly IUnitOfWork _unitOfWork;
-        public TransactionHandler(RiskScorer riskScore, ITransactionRepository transactionRepository, ICustomerStateStore customerStateStore, CaseWriter caseWriter, TimeProvider timeProvider, IUnitOfWork unitOfWork)
+        private readonly ScoringOptions _options;
+        public TransactionHandler(RiskScorer riskScore, ITransactionRepository transactionRepository, ICustomerStateStore customerStateStore, CaseWriter caseWriter, TimeProvider timeProvider, IUnitOfWork unitOfWork, IOptions<ScoringOptions> options)
         {
             _riskScore = riskScore;
             _transactionRepository = transactionRepository;
@@ -23,6 +25,7 @@ namespace Fraud.Scoring.Handling
             _caseWriter = caseWriter;
             _timeProvider = timeProvider;
             _unitOfWork = unitOfWork;
+            _options = options.Value;
         }
 
         public async Task HandleTransaction(TransactionCreated tx, CancellationToken cancellationToken)
@@ -93,11 +96,12 @@ namespace Fraud.Scoring.Handling
             }
             else
             {
-                UpdatedState.RecentTransactionTimes = [.. UpdatedState.RecentTransactionTimes.Where(t => tx.OccurredAt - t <= TimeSpan.FromDays(30))];
+                UpdatedState.RecentTransactionTimes = [.. State.RecentTransactionTimes, tx.OccurredAt];
+                UpdatedState.RecentTransactionTimes = [.. State.RecentTransactionTimes.Where(t => tx.OccurredAt - t <= _options.VelocityWindow)];
                 UpdatedState.LastCountry = tx.Country;
                 UpdatedState.LastTransactionAt = tx.OccurredAt;
-                UpdatedState.AverageAmount = ((UpdatedState.AverageAmount * UpdatedState.TransactionCount) + tx.Amount)
-                                              / (UpdatedState.TransactionCount + 1);
+                UpdatedState.AverageAmount = ((State.AverageAmount * State.TransactionCount) + tx.Amount)
+                                              / (State.TransactionCount + 1);
                 UpdatedState.TransactionCount += 1;
             }
 

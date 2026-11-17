@@ -17,9 +17,11 @@ namespace Fraud.Scoring
 
             builder.AddAzureServiceBusClient("ServiceBus");
             builder.ConfigureDatabaseServices();
-            builder.AddRedisClient("Redis");
-            builder.Services.AddDistributedMemoryCache();
-
+            builder.Services.AddStackExchangeRedisCache(setup =>
+            {
+                setup.Configuration = builder.Configuration.GetConnectionString("Redis");
+                setup.InstanceName = "FraudScoring:";
+            });
             builder.Services.Configure<ScoringOptions>(builder.Configuration.GetSection(ScoringOptions.SectionName));
 
 
