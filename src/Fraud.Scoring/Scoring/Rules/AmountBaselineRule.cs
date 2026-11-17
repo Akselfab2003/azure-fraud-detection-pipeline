@@ -8,7 +8,7 @@ namespace Fraud.Scoring.Scoring.Rules
     {
         private const string REASONCODE = "AMOUNT_SPIKE";
         private const string DESCRIPTION = "Transaction amount is significantly higher than the customer's baseline.";
-        public RuleHit? Evaluate(TransactionCreated transaction, CustomerState state, DateTimeOffset now)
+        public async Task<RuleHit?> Evaluate(TransactionCreated transaction, CustomerState state, DateTimeOffset now)
         {
             if (state.TransactionCount < _o.Value.MinHistory)
             {

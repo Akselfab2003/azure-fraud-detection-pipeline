@@ -10,7 +10,7 @@ namespace Fraud.Scoring.Scoring.Rules
         private const string DESCRIPTION = "Transaction location is inconsistent with previous transactions.";
         private readonly ScoringOptions _options = options.Value;
 
-        public RuleHit? Evaluate(TransactionCreated transaction, CustomerState state, DateTimeOffset now)
+        public async Task<RuleHit?> Evaluate(TransactionCreated transaction, CustomerState state, DateTimeOffset now)
         {
             if (state.LastCountry is null || state.LastTransactionAt is null)
             {

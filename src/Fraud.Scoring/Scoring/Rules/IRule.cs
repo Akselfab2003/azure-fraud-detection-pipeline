@@ -12,6 +12,6 @@ namespace Fraud.Scoring.Scoring.Rules
         /// <param name="state">The customer state to evaluate against.</param>
         /// <param name="now">The current time.</param>
         /// <returns>The result of the evaluation, or null if the rule does not apply.</returns>
-        RuleHit? Evaluate(TransactionCreated transaction, CustomerState state, DateTimeOffset now);
+        Task<RuleHit?> Evaluate(TransactionCreated transaction, CustomerState state, DateTimeOffset now);
     }
 }

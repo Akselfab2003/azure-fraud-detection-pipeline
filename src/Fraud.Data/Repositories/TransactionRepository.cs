@@ -30,5 +30,13 @@ namespace Fraud.Data.Repositories
         public async Task<IEnumerable<TransactionEntity>> GetAllTransactionsAsync()
             => await _context.Transactions.ToListAsync();
 
+
+        public async Task<IEnumerable<TransactionEntity>> GetTransactionsByCustomer(Guid customerId, DateTimeOffset? from, DateTimeOffset? to)
+            => await _context.Transactions
+                .Where(t => t.CustomerId == customerId
+                            && (!from.HasValue || t.OccurredAt >= from)
+                            && (!to.HasValue || t.OccurredAt <= to))
+                .ToListAsync();
+
     }
 }

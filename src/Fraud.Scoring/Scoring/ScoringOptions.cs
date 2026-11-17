@@ -25,5 +25,12 @@
         /// <summary>A different country within this long of the last transaction counts as impossible travel.</summary>
         public TimeSpan ImpossibleTravelWindow { get; init; } = TimeSpan.FromHours(1);
         public int ImpossibleTravelPoints { get; init; } = 40;
+
+
+
+        public int NewMerchantBurstThreshold { get; init; } = 4;
+        public int NewMerchantBurstWindowSeconds { get; init; } = 600;
+        public int NewMerchantBurstScore { get; init; } = 40;
+
     }
 }
