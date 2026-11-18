@@ -1,6 +1,7 @@
 using Fraud.Contracts;
 using Fraud.Data.Entities;
 using Fraud.Data.Repositories;
+using Fraud.Scoring.Infrastructure;
 using Fraud.Scoring.Scoring;
 using Fraud.Scoring.Scoring.Rules;
 using Fraud.Scoring.Scoring.State;
@@ -16,7 +17,14 @@ public class NewMerchantBurstRuleTests
     private readonly Guid _customer = Guid.CreateVersion7();
     private readonly ITransactionRepository _repository = Substitute.For<ITransactionRepository>();
 
-    private NewMerchantBurstRule Rule(ScoringOptions? options = null) => new(TestData.Options(options), _repository);
+    private readonly ITransactionStore _store = Substitute.For<ITransactionStore>();
+
+    private NewMerchantBurstRule Rule(ScoringOptions? options = null)
+    {
+        // Empty cache -> the rule falls back to the repository.
+        _store.ReadTransactionsFromCache(default).ReturnsForAnyArgs([]);
+        return new(TestData.Options(options), _store, _repository);
+    }
 
     private CustomerState Established => TestData.State(count: Defaults.MinHistory);
 

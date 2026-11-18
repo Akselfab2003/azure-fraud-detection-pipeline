@@ -46,14 +46,17 @@ public class TransactionHandlerTests(InfraFixture infra)
         transactions = wrapTransactions?.Invoke(transactions) ?? transactions;
         var time = TestData.Clock();
 
+        ITransactionStore transactionStore = new RedisTransactionStore(NullLogger<RedisCustomerStateStore>.Instance, infra.Multiplexer, time);
+
         var handler = new TransactionHandler(
-            new RiskScorer([new VelocityRule(options), new AmountBaselineRule(options), new ImpossibleTravelRule(options), new NewMerchantBurstRule(options, transactions)], options),
+            new RiskScorer([new VelocityRule(options), new AmountBaselineRule(options), new ImpossibleTravelRule(options), new NewMerchantBurstRule(options, transactionStore, transactions)], options),
             transactions,
             stateStore ?? new RedisCustomerStateStore(NullLogger<RedisCustomerStateStore>.Instance, infra.CreateCache()),
             new CaseWriter(new CaseRepository(NullLogger<CaseRepository>.Instance, db), time, options),
             time,
             new UnitOfWork(NullLogger<UnitOfWork>.Instance, db),
-            options);
+            options,
+            transactionStore);
 
         await handler.HandleTransaction(tx, TestContext.Current.CancellationToken);
     }

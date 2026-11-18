@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.Options;
+using StackExchange.Redis;
 using Testcontainers.PostgreSql;
 using Testcontainers.Redis;
 
@@ -36,11 +37,20 @@ public sealed class InfraFixture : IAsyncLifetime
 
     public async ValueTask DisposeAsync()
     {
+        if (_multiplexer.IsValueCreated)
+            await _multiplexer.Value.DisposeAsync();
         await _postgres.DisposeAsync();
         await _redis.DisposeAsync();
     }
 
     public FraudDbContext CreateDbContext() => new(_dbOptions);
+
+    private readonly Lazy<IConnectionMultiplexer> _multiplexer;
+
+    public InfraFixture() =>
+        _multiplexer = new(() => ConnectionMultiplexer.Connect(RedisConnectionString));
+
+    public IConnectionMultiplexer Multiplexer => _multiplexer.Value;
 
     public IDistributedCache CreateCache() => new RedisCache(Options.Create(new RedisCacheOptions
     {

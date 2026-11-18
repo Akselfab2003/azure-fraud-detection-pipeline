@@ -28,16 +28,11 @@ namespace Fraud.Scoring.Scoring.Rules
             var transactions = await transactionStore.ReadTransactionsFromCache(transaction.CustomerId);
             if (transactions is null || transactions.Count == 0)
             {
-                transactions = await transactionRepository.GetTransactionsByCustomer(transaction.CustomerId, from: null, to: windowStart).ContinueWith(t =>
-                {
-                    return t.Result.Select(s =>
-                    {
-                        return new TransactionCreated(s.Id, s.CustomerId, s.MerchantId, s.MerchantCategory, s.Amount, s.Currency, s.Country, s.Channel, s.OccurredAt);
-                    }).ToList();
-                });
+                var stored = await transactionRepository.GetTransactionsByCustomer(transaction.CustomerId, windowStart, now);
+                transactions = stored.Select(s => new TransactionCreated(s.Id, s.CustomerId, s.MerchantId, s.MerchantCategory, s.Amount, s.Currency, s.Country, s.Channel, s.OccurredAt)).ToList();
             }
 
-            var inWindow = transactions.Where(t => t.OccurredAt >= windowStart && t.OccurredAt <= now).OfType<TransactionCreated>().ToList();
+            var inWindow = transactions.Where(t => t.OccurredAt >= windowStart && t.OccurredAt <= now).ToList();
 
             var before = await transactionRepository.GetTransactionsByCustomer(transaction.CustomerId, null, windowStart.AddTicks(-1));
 
