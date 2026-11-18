@@ -13,13 +13,14 @@ namespace Fraud.Scoring.Handling
     public class TransactionHandler
     {
         private readonly ITransactionRepository _transactionRepository;
+        private readonly ITransactionStore _transactionStore;
         private readonly ICustomerStateStore _customerStateStore;
         private readonly IUnitOfWork _unitOfWork;
         private readonly RiskScorer _riskScore;
         private readonly CaseWriter _caseWriter;
         private readonly TimeProvider _timeProvider;
         private readonly ScoringOptions _options;
-        public TransactionHandler(RiskScorer riskScore, ITransactionRepository transactionRepository, ICustomerStateStore customerStateStore, CaseWriter caseWriter, TimeProvider timeProvider, IUnitOfWork unitOfWork, IOptions<ScoringOptions> options)
+        public TransactionHandler(RiskScorer riskScore, ITransactionRepository transactionRepository, ICustomerStateStore customerStateStore, CaseWriter caseWriter, TimeProvider timeProvider, IUnitOfWork unitOfWork, IOptions<ScoringOptions> options, ITransactionStore transactionStore)
         {
             _riskScore = riskScore;
             _transactionRepository = transactionRepository;
@@ -28,6 +29,7 @@ namespace Fraud.Scoring.Handling
             _timeProvider = timeProvider;
             _unitOfWork = unitOfWork;
             _options = options.Value;
+            _transactionStore = transactionStore;
         }
 
         public async Task HandleTransaction(TransactionCreated tx, CancellationToken cancellationToken)
@@ -39,6 +41,8 @@ namespace Fraud.Scoring.Handling
                 // Transaction has already been processed, skip further processing
                 return;
             }
+
+            await _transactionStore.WriteTransactionToCache(tx, cancellationToken);
 
             CustomerState? customerState = await _customerStateStore.GetCustomerState(tx.CustomerId, cancellationToken);
 

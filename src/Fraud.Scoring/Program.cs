@@ -29,7 +29,8 @@ namespace Fraud.Scoring
                             .AddScoped<CaseWriter>()
                             .AddScoped<TransactionHandler>();
 
-            builder.Services.AddScoped<ICustomerStateStore, RedisCustomerStateStore>();
+            builder.Services.AddScoped<ICustomerStateStore, RedisCustomerStateStore>()
+                            .AddScoped<ITransactionStore, RedisTransactionStore>();
 
             builder.Services.AddScoped<IRule, VelocityRule>()
                             .AddScoped<IRule, AmountBaselineRule>()
