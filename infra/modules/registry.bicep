@@ -4,8 +4,8 @@ param name string
 param location string
 @description('Tags applied to every resource.')
 param tags object
-@description('the Identity identifier to assign to the registry.')
-param identityid string
+@description('the principalId identifier to assign to the registry.')
+param principalId string
 
 resource registry 'Microsoft.ContainerRegistry/registries@2025-11-01' = {
   name: name
@@ -23,14 +23,14 @@ resource registry 'Microsoft.ContainerRegistry/registries@2025-11-01' = {
 }
 
 resource identityAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(registry.id, identityid, 'acrpull')
+  name: guid(registry.id, principalId, 'acrpull')
   scope: registry
   properties: {
     roleDefinitionId: subscriptionResourceId(
       'Microsoft.Authorization/roleDefinitions',
       '7f951dda-4ed3-4680-a7ca-43fe172d538d'
     ) // AcrPull
-    principalId: identityid
+    principalId: principalId
     principalType: 'ServicePrincipal'
   }
 }
