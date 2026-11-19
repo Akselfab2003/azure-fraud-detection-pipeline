@@ -9,9 +9,6 @@ resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' 
   name: name
   location: location
   tags: tags
-  properties: {
-    isolationScope: 'tenant'
-  }
 }
 
 output id string = identity.id

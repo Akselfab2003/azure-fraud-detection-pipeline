@@ -41,9 +41,9 @@ module registry 'modules/registry.bicep' = {
   name: 'registry'
   scope: rg
   params: {
-    name: 'acr-${workload}-${environmentName}'
+    name: 'acr${workload}${uniqueString(subscription().id, environmentName, location)}'
     location: location
     tags: tags
-    principalId: identity.outputs.principalId
+    identityid: identity.outputs.id
   }
 }
