@@ -4,7 +4,7 @@ param name string
 param location string
 @description('Tags applied to every resource.')
 param tags object
-@description('the principalId identifier to assign to the registry.')
+@description('Principal ID of the managed identity that gets AcrPull on the registry.')
 param principalId string
 
 resource registry 'Microsoft.ContainerRegistry/registries@2025-11-01' = {
@@ -34,6 +34,5 @@ resource identityAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01'
     principalType: 'ServicePrincipal'
   }
 }
-
 
 output loginServer string = registry.properties.loginServer

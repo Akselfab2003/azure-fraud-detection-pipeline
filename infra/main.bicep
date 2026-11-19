@@ -20,12 +20,24 @@ module monitoring 'modules/monitoring.bicep' = {
   name: 'monitoring'
   scope: rg
   params: {
-    name: 'law-${workload}-${environmentName}'
-    appInsightsName: 'appinsights-${workload}-${environmentName}'
+    name: 'log-${workload}-${environmentName}'
+    appInsightsName: 'appi-${workload}-${environmentName}'
     location: location
     tags: tags
   }
 }
+
+module containerAppsEnv 'modules/containerapps-env.bicep' = {
+  name: 'containerAppsEnv'
+  scope: rg
+  params: {
+    name: 'cae-${workload}-${environmentName}'
+    location: location
+    tags: tags
+    logAnalyticsName: monitoring.outputs.workspaceName
+  }
+}
+
 
 module identity 'modules/identity.bicep' = {
   name: 'identity'
@@ -47,3 +59,9 @@ module registry 'modules/registry.bicep' = {
     principalId: identity.outputs.principalId
   }
 }
+
+
+
+
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = registry.outputs.loginServer
+output AZURE_RESOURCE_GROUP string = rg.name
