@@ -60,6 +60,18 @@ module registry 'modules/registry.bicep' = {
   }
 }
 
+module postgres 'modules/postgres.bicep' = {
+  name: 'postgres'
+  scope: rg
+  params: {
+    name: 'psql-${workload}-${environmentName}-${uniqueString(subscription().id, environmentName, location)}'
+    location: location
+    tags: tags
+    adminPrincipalId: identity.outputs.principalId
+    adminPrincipalName: identity.outputs.name
+  }
+}
+
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = registry.outputs.loginServer
 output AZURE_RESOURCE_GROUP string = rg.name
 output AZURE_CONTAINER_APPS_ENVIRONMENT_ID string = containerAppsEnv.outputs.id
