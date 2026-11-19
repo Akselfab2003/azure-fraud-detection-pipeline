@@ -9,7 +9,7 @@ param workload string
 
 var tags = {
   project: workload
-  environment: environmentName
+  env: environmentName
   'azd-env-name': environmentName
 }
 
