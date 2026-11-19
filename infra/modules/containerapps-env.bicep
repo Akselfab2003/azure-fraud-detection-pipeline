@@ -7,11 +7,11 @@ param tags object
 @description('Name of the existing Log Analytics workspace that receives the environment logs.')
 param logAnalyticsName string
 
-resource law 'Microsoft.OperationalInsights/workspaces@2026-03-01' existing = {
+resource law 'Microsoft.OperationalInsights/workspaces@2023-09-01' existing = {
   name: logAnalyticsName
 }
 
-resource env 'Microsoft.App/managedEnvironments@2026-07-01' = {
+resource env 'Microsoft.App/managedEnvironments@2025-01-01' = {
   name: name
   location: location
   tags: tags

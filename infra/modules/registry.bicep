@@ -7,7 +7,7 @@ param tags object
 @description('Principal ID of the managed identity that gets AcrPull on the registry.')
 param principalId string
 
-resource registry 'Microsoft.ContainerRegistry/registries@2025-11-01' = {
+resource registry 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
   name: name
   location: location
   tags: tags
@@ -15,7 +15,6 @@ resource registry 'Microsoft.ContainerRegistry/registries@2025-11-01' = {
     name: 'Basic'
   }
   properties: {
-    anonymousPullEnabled: false
     adminUserEnabled: false
     zoneRedundancy: 'Disabled'
     publicNetworkAccess: 'Enabled'

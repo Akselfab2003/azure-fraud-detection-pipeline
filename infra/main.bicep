@@ -8,6 +8,7 @@ param location string
 param workload string
 
 var rgName = 'rg-${workload}-${environmentName}'
+var acrName = 'acr${workload}${environmentName}${uniqueString(subscription().id, environmentName, location)}'
 var tags = { project: workload, env: environmentName, 'azd-env-name': environmentName }
 
 resource rg 'Microsoft.Resources/resourceGroups@2025-04-01' = {
@@ -38,7 +39,6 @@ module containerAppsEnv 'modules/containerapps-env.bicep' = {
   }
 }
 
-
 module identity 'modules/identity.bicep' = {
   name: 'identity'
   scope: rg
@@ -53,15 +53,15 @@ module registry 'modules/registry.bicep' = {
   name: 'registry'
   scope: rg
   params: {
-    name: 'acr${workload}${uniqueString(subscription().id, environmentName, location)}'
+    name: acrName
     location: location
     tags: tags
     principalId: identity.outputs.principalId
   }
 }
 
-
-
-
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = registry.outputs.loginServer
 output AZURE_RESOURCE_GROUP string = rg.name
+output AZURE_CONTAINER_APPS_ENVIRONMENT_ID string = containerAppsEnv.outputs.id
+output AZURE_USER_ASSIGNED_IDENTITY_ID string = identity.outputs.id
+output APPLICATIONINSIGHTS_CONNECTION_STRING string = monitoring.outputs.appInsightsConnectionString

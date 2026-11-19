@@ -6,8 +6,10 @@ param appInsightsName string
 param location string
 @description('Tags applied to every resource.')
 param tags object
+@description('Daily ingestion cap in GB for the workspace, to keep dev costs bounded.')
+param dailyQuotaGb int = 1
 
-resource law 'Microsoft.OperationalInsights/workspaces@2026-03-01' = {
+resource law 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: name
   location: location
   tags: tags
@@ -16,6 +18,9 @@ resource law 'Microsoft.OperationalInsights/workspaces@2026-03-01' = {
       name: 'PerGB2018'
     }
     retentionInDays: 7
+    workspaceCapping: {
+      dailyQuotaGb: dailyQuotaGb
+    }
   }
 }
 
